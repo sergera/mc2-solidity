@@ -16,6 +16,8 @@ import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./IStrategyPool.sol";
 import "./StrategyPool.sol";
 
+import "./IStrategyPoolFactory.sol";
+
 /**
  * @dev Factory contract for the MC²Fi StrategyPool contract
  *
@@ -23,7 +25,7 @@ import "./StrategyPool.sol";
  * - keeps track of strategy pool trader EOA addresses
  * - keeps track of strategy pool addresses
  */
-contract StrategyPoolFactory is Ownable {
+contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
     address public poolOwner;
     mapping(address => IStrategyPool) public traderToPool;
     address[] public traderAddresses;
@@ -44,7 +46,7 @@ contract StrategyPoolFactory is Ownable {
         string memory _name,
         string memory _symbol,
         uint256 _initialDepositShareValue
-    ) external onlyOwner {
+    ) external override onlyOwner returns (IStrategyPool) {
         require(
             traderToPool[_trader] == IStrategyPool(address(0)),
             "pool already exists for trader"
@@ -57,12 +59,18 @@ contract StrategyPoolFactory is Ownable {
         );
         traderToPool[_trader] = newPool;
         traderAddresses.push(_trader);
+
+        emit CreatePool(_msgSender(), _trader, newPool);
+
+        return newPool;
     }
 
     /**
      * @dev Get Pool address by providing the trader's EOA address.
      */
-    function getPool(address _trader) external view returns (IStrategyPool) {
+    function getPool(
+        address _trader
+    ) external view override returns (IStrategyPool) {
         return traderToPool[_trader];
     }
 }
