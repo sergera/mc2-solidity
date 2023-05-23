@@ -73,4 +73,11 @@ contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
     ) external view override returns (IStrategyPool) {
         return traderToPool[_trader];
     }
+
+    /**
+     * @dev Returns array of trader addresses that have Pools.
+     */
+    function traders() external view override returns (address[] memory) {
+        return traderAddresses;
+    }
 }

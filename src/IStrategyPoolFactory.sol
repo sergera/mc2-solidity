@@ -40,4 +40,9 @@ interface IStrategyPoolFactory {
      * @dev Get Pool address by providing the trader's EOA address.
      */
     function getPool(address trader) external returns (IStrategyPool pool);
+
+    /**
+     * @dev Returns array of trader addresses that have Pools.
+     */
+    function traders() external returns (address[] memory traders);
 }
