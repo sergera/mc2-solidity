@@ -26,58 +26,54 @@ import "./IStrategyPoolFactory.sol";
  * - keeps track of strategy pool addresses
  */
 contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
-    address public poolOwner;
-    mapping(address => IStrategyPool) public traderToPool;
-    address[] public traderAddresses;
+    IStrategyPool[] public pools;
 
     /**
      * @dev Set owner, owner is solely responsible for creating new Pools.
      */
-    constructor(address _newOwner, address _poolOwner) {
+    constructor(address _newOwner) {
         _transferOwnership(_newOwner);
-        poolOwner = _poolOwner;
     }
 
     /**
      * @dev Create a new Pool.
      */
     function createPool(
-        address _trader,
         string memory _name,
         string memory _symbol,
         uint256 _initialDepositShareValue
     ) external override onlyOwner returns (IStrategyPool) {
-        require(
-            traderToPool[_trader] == IStrategyPool(address(0)),
-            "pool already exists for trader"
-        );
         StrategyPool newPool = new StrategyPool(
             _name,
             _symbol,
-            poolOwner,
+            owner(),
             _initialDepositShareValue
         );
-        traderToPool[_trader] = newPool;
-        traderAddresses.push(_trader);
+        pools.push(newPool);
 
-        emit CreatePool(_msgSender(), _trader, newPool);
+        emit CreatePool(_msgSender(), newPool);
 
         return newPool;
     }
 
     /**
-     * @dev Get Pool address by providing the trader's EOA address.
+     * @dev Get Pool address by providing the Pool array index.
      */
     function getPool(
-        address _trader
+        uint256 _index
     ) external view override returns (IStrategyPool) {
-        return traderToPool[_trader];
+        return pools[_index];
     }
 
     /**
      * @dev Returns array of trader addresses that have Pools.
      */
-    function traders() external view override returns (address[] memory) {
-        return traderAddresses;
+    function getPools()
+        external
+        view
+        override
+        returns (IStrategyPool[] memory)
+    {
+        return pools;
     }
 }

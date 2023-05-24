@@ -17,11 +17,7 @@ import "./IStrategyPool.sol";
  * @dev Interface of the MC²Fi StrategyPoolFactory contract
  */
 interface IStrategyPoolFactory {
-    event CreatePool(
-        address indexed sender,
-        address indexed trader,
-        IStrategyPool indexed pool
-    );
+    event CreatePool(address indexed sender, IStrategyPool indexed pool);
 
     /**
      * @dev Create a new Pool.
@@ -30,19 +26,18 @@ interface IStrategyPoolFactory {
      * - MUST revert if the trader already has a Pool
      */
     function createPool(
-        address trader,
         string memory name,
         string memory symbol,
         uint256 initialDepositShareValue
     ) external returns (IStrategyPool pool);
 
     /**
-     * @dev Get Pool address by providing the trader's EOA address.
+     * @dev Get Pool address by providing the Pool array index.
      */
-    function getPool(address trader) external returns (IStrategyPool pool);
+    function getPool(uint256 index) external returns (IStrategyPool pool);
 
     /**
-     * @dev Returns array of trader addresses that have Pools.
+     * @dev Get all Pool addresses.
      */
-    function traders() external returns (address[] memory traders);
+    function getPools() external returns (IStrategyPool[] memory pools);
 }
