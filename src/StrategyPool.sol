@@ -28,7 +28,6 @@ import "./IStrategyPool.sol";
  * - keeps track of currently owned tokens, no possible donation attacks
  * - represents a dynamic token strategy, owner can change the underlying tokens and their ratios
  * - gated-entry, only owner can deposit
- * - mints shares on deposit, enforcing a ratio of underlying assets
  * - burns shares on withdrawal
  * - for simplicity the only entry is deposit, and the only exit is redeem
  */
@@ -89,52 +88,6 @@ contract StrategyPool is
         }
 
         return (assetAddresses, _amounts);
-    }
-
-    /**
-     * @dev Internal conversion function (from assets to shares) with support for rounding direction.
-     *
-     * NOTE: the pool is meant to enforce a certain ratio of tokens that can only be changed by the owner,
-     * so the share calculation compares each token's amount to the pool's and returns the lesser value of
-     * "shares = (amount * totalShares) / totalAmountOwnedByPool", therefore if the caller does not
-     * abide by the ratio owned by the pool, the caller will receive the least favorable bargain. That is also
-     * why this call reverts if any inputted tokens are not owned by the pool, since that would make the denominator "1",
-     * giving the caller the most favorable bargain.
-     */
-    function _convertToShares(
-        IERC20[] memory _assets,
-        uint256[] memory _amounts,
-        Math.Rounding _rounding
-    ) internal view returns (uint256) {
-        /* use minimum ratio to calculate shares */
-        uint256 _minShares = type(uint256).max;
-        for (uint256 i = 0; i < _assets.length; i++) {
-            require(
-                _assetIndices[_assets[i]] > 0,
-                "token is not currently owned by the contract"
-            );
-
-            uint256 _shares = _convertToSharesSingle(
-                _assets[i],
-                _amounts[i],
-                _rounding
-            );
-            if (_shares < _minShares) {
-                _minShares = _shares;
-            }
-        }
-        return _minShares;
-    }
-
-    /**
-     * @dev Internal conversion function (from single asset to shares) with support for rounding direction.
-     */
-    function _convertToSharesSingle(
-        IERC20 _asset,
-        uint256 _amount,
-        Math.Rounding _rounding
-    ) internal view returns (uint256) {
-        return _amount.mulDiv(totalSupply(), assetBalances[_asset], _rounding);
     }
 
     /**
@@ -232,31 +185,6 @@ contract StrategyPool is
     }
 
     /**
-     * @dev Allows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given
-     * current on-chain conditions.
-     *
-     * NOTE: if returned shares value > maxMint(), then the deposit will fail.
-     */
-    function previewDeposit(
-        IERC20[] memory _assets,
-        uint256[] memory _amounts
-    ) external view override returns (uint256) {
-        require(
-            _assets.length == _amounts.length,
-            "arrays must be of equal length"
-        );
-
-        require(
-            _assets.length == assetAddresses.length,
-            "all owned assets must be included"
-        );
-
-        require(assetAddresses.length > 0, "pool must be non-empty to preview");
-
-        return _convertToShares(_assets, _amounts, Math.Rounding.Down);
-    }
-
-    /**
      * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
      */
     function deposit(
@@ -265,7 +193,7 @@ contract StrategyPool is
         uint256 _shares,
         address _receiver
     ) external override onlyOwner {
-        require(_shares <= maxMint(), "deposit more than max");
+        require(_shares <= maxMint(), "shares more than max");
         if (assetAddresses.length == 0) {
             /* first deposit, add assets to the pool */
             for (uint256 i = 0; i < _assets.length; i++) {
@@ -294,6 +222,10 @@ contract StrategyPool is
         // slither-disable-next-line reentrancy-no-eth
 
         for (uint256 i = 0; i < _assets.length; i++) {
+            require(_amounts[i] > 0, "cannot deposit 0 amount");
+            if (!assetIsOwned(_assets[i])) {
+                addAsset(_assets[i]);
+            }
             SafeERC20.safeTransferFrom(
                 _assets[i],
                 _caller,

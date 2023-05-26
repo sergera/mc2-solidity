@@ -119,27 +119,10 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         returns (IERC20[] memory assets, uint256[] memory minAmounts);
 
     /**
-     * @dev Allows an on-chain or off-chain user to simulate the effects of their deposit at the current block, given
-     * current on-chain conditions.
-     *
-     * - MUST NOT show any variations depending on the caller.
-     * - MUST revert if input arrays have different lengths.
-     * - MUST revert if Pool is empty.
-     * - MUST revert if any input token addresses are not owned by the Pool.
-     * - MUST revert if a token address owned by the Pool is missing from input.
-     *
-     * NOTE: any unfavorable discrepancy between convertToShares and previewDeposit SHOULD be considered slippage in
-     * share price or some other type of condition, meaning the depositor will lose assets by depositing.
-     */
-    function previewDeposit(
-        IERC20[] memory assets,
-        uint256[] memory amounts
-    ) external view returns (uint256 shares);
-
-    /**
      * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
      *
      * - MUST emit the Deposit event.
+     * - MUST revert if amount is 0.
      * - MUST revert if all of the assets cannot be deposited (due to deposit limit being reached, slippage, the user not
      *   approving enough underlying tokens to the Pool contract, etc).
      * - MUST revert if minted shares exceed maxMint().
