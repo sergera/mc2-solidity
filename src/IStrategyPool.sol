@@ -179,6 +179,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * - MUST emit the AcquireBeforeTrade event.
      * - MUST revert if asset is not owned by the Pool.
      * - MUST revert if amount is greater than the asset balance.
+     * - MUST revert if amount is 0.
      */
     function acquireAssetBeforeTrade(IERC20 asset, uint256 amount) external;
 

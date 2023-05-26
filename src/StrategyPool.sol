@@ -374,6 +374,7 @@ contract StrategyPool is
         uint256 _amount
     ) external override onlyOwner nonReentrant whenNotPaused {
         _pause();
+        require(_amount > 0, "StrategyPool: acquire 0 amount");
         require(assetIsOwned(_asset), "StrategyPool: acquire unowned asset");
         require(
             assetBalances[_asset] >= _amount,
