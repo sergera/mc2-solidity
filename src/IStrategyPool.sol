@@ -37,10 +37,16 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         uint256 shares
     );
 
-    event ChangeStrategy(
+    event AcquireBeforeTrade(
         address indexed sender,
-        IERC20[] assetChanged,
-        int256[] balanceChanges
+        IERC20 asset,
+        uint256 amount
+    );
+
+    event GiveBackAfterTrade(
+        address indexed sender,
+        IERC20[] assets,
+        uint256[] amounts
     );
 
     /**
@@ -201,16 +207,25 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     ) external returns (IERC20[] memory assets, uint256[] memory amounts);
 
     /**
-     * @dev Updates assets owned by the Pool.
+     * @dev Owner acquires Pool's asset to perform trade / strategy change.
      *
-     * - MUST emit the ChangeStrategy event with any assets updated, and their balance changes.
+     * - MUST emit the AcquireBeforeTrade event.
+     * - MUST revert if asset is not owned by the Pool.
+     * - MUST revert if amount is greater than the asset balance.
+     */
+    function acquireAssetBeforeTrade(IERC20 asset, uint256 amount) external;
+
+    /**
+     * @dev Owner gives back assets after trade / strategy change.
+     *
+     * - MUST emit the GiveBackAfterTrade event.
      * - MUST revert if input arrays have different lengths.
-     * - MUST revert if Pool is empty.
+     * - MUST revert if amount is 0.
      * - MUST revert if all of the assets cannot be transfered (due to slippage, the account not
      *   approving enough underlying tokens to the Pool contract, etc).
      */
-    function changeStrategy(
+    function giveBackAssetsAfterTrade(
         IERC20[] calldata assets,
-        int256[] calldata balanceChanges
+        uint256[] calldata amounts
     ) external;
 }

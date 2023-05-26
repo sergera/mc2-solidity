@@ -32,7 +32,13 @@ import "./IStrategyPool.sol";
  * - burns shares on withdrawal
  * - for simplicity the only entry is deposit, and the only exit is redeem
  */
-contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
+contract StrategyPool is
+    ERC20,
+    Ownable,
+    Pausable,
+    ReentrancyGuard,
+    IStrategyPool
+{
     using Math for uint256;
 
     IERC20[] public assetAddresses;
@@ -294,7 +300,6 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
                 address(this),
                 _amounts[i]
             );
-            SafeERC20.safeIncreaseAllowance(_assets[i], owner(), _amounts[i]);
             assetBalances[_assets[i]] += _amounts[i];
         }
         _mint(_receiver, _shares);
@@ -363,7 +368,12 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
         uint256 _shares,
         address _receiver,
         address _owner
-    ) external override returns (IERC20[] memory, uint256[] memory) {
+    )
+        external
+        override
+        whenNotPaused
+        returns (IERC20[] memory, uint256[] memory)
+    {
         require(_shares <= balanceOf(_owner), "redeem more than max");
 
         (IERC20[] memory _assets, uint256[] memory _amounts) = _convertToAssets(
@@ -400,7 +410,6 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
 
         for (uint256 i = 0; i < _assets.length; i++) {
             SafeERC20.safeTransfer(_assets[i], _receiver, _amounts[i]);
-            SafeERC20.safeDecreaseAllowance(_assets[i], owner(), _amounts[i]);
             assetBalances[_assets[i]] -= _amounts[i];
             if (assetBalances[_assets[i]] == 0) {
                 removeAsset(_assets[i]);
@@ -411,83 +420,68 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     }
 
     /**
-     * @dev Updates assets owned by the pool according owner's strategy.
+     * @dev Owner acquires Pool's asset to perform trade / strategy change.
      */
-    function changeStrategy(
-        IERC20[] calldata _assets,
-        int256[] calldata _balanceDeltas
-    ) external override onlyOwner {
-        require(assetAddresses.length > 0, "pool is empty");
+    function acquireAssetBeforeTrade(
+        IERC20 _asset,
+        uint256 _amount
+    ) external override onlyOwner nonReentrant whenNotPaused {
+        _pause();
         require(
-            _assets.length == _balanceDeltas.length,
+            assetIsOwned(_asset),
+            "asset is not currently owned by the contract"
+        );
+        require(
+            assetBalances[_asset] >= _amount,
+            "amount exceeds owned balance"
+        );
+        SafeERC20.safeTransfer(_asset, owner(), _amount);
+        assetBalances[_asset] -= _amount;
+        if (assetBalances[_asset] == 0) {
+            removeAsset(_asset);
+        }
+
+        emit AcquireBeforeTrade(_msgSender(), _asset, _amount);
+    }
+
+    /**
+     * @dev Owner gives back assets after trade / strategy change.
+     */
+    function giveBackAssetsAfterTrade(
+        IERC20[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external override onlyOwner nonReentrant whenPaused {
+        require(
+            _assets.length == _amounts.length,
             "arrays must be of equal length"
         );
 
         for (uint256 i = 0; i < _assets.length; i++) {
-            uint256 _absoluteBalanceDelta = abs(_balanceDeltas[i]);
+            require(_amounts[i] > 0, "cannot give back 0 amount");
             if (assetIsOwned(_assets[i])) {
-                /* asset is already owned */
-                if (_balanceDeltas[i] < 0) {
-                    /* negative balance change */
-                    assetBalances[_assets[i]] -= _absoluteBalanceDelta;
-                    if (assetBalances[_assets[i]] == 0) {
-                        /* new balance is 0, remove it from owned assets, and remove owner approval */
-                        removeAsset(_assets[i]);
-                        SafeERC20.safeApprove(_assets[i], owner(), 0);
-                    } else {
-                        /* new balance is non-zero, decrease allowance */
-                        if (
-                            _assets[i].allowance(address(this), owner()) ==
-                            assetBalances[_assets[i]] + _absoluteBalanceDelta
-                        ) {
-                            /* TODO: decide if this check should be removed or not */
-                            /* if contract has not spent allowance with owner's transferFrom call, decrease it */
-                            /* transferFrom should have spent allowance, this might not be needed */
-                            SafeERC20.safeDecreaseAllowance(
-                                _assets[i],
-                                owner(),
-                                _absoluteBalanceDelta
-                            );
-                        }
-                    }
-                } else {
-                    /* positive balance change, acquire balance change, and increase allowance */
-                    assetBalances[_assets[i]] += uint256(_balanceDeltas[i]);
-                    SafeERC20.safeTransferFrom(
-                        _assets[i],
-                        owner(),
-                        address(this),
-                        _absoluteBalanceDelta
-                    );
-                    SafeERC20.safeIncreaseAllowance(
-                        _assets[i],
-                        owner(),
-                        _absoluteBalanceDelta
-                    );
-                }
-            } else {
-                require(
-                    _balanceDeltas[i] > 0,
-                    "can't add a asset with a negative or zero balance"
-                );
-                /* asset is new, add it to owned assets, acquire balance change, and approve allowance */
-                addAsset(_assets[i]);
-                assetBalances[_assets[i]] = _absoluteBalanceDelta;
+                /* asset is already owned, acquire it, and add to its balance */
                 SafeERC20.safeTransferFrom(
                     _assets[i],
                     owner(),
                     address(this),
-                    _absoluteBalanceDelta
+                    _amounts[i]
                 );
-                SafeERC20.safeApprove(
+                assetBalances[_assets[i]] += _amounts[i];
+            } else {
+                /* asset is new, acquire it, add asset, and add to its balance */
+                SafeERC20.safeTransferFrom(
                     _assets[i],
                     owner(),
-                    _absoluteBalanceDelta
+                    address(this),
+                    _amounts[i]
                 );
+                addAsset(_assets[i]);
+                assetBalances[_assets[i]] += _amounts[i];
             }
         }
 
-        emit ChangeStrategy(_msgSender(), _assets, _balanceDeltas);
+        emit GiveBackAfterTrade(_msgSender(), _assets, _amounts);
+        _unpause();
     }
 
     /**
@@ -534,12 +528,5 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
      */
     function assetIsOwned(IERC20 _asset) private view returns (bool) {
         return _assetIndices[_asset] != 0;
-    }
-
-    /**
-     * @dev Returns the absolute uint256 representation of an int256.
-     */
-    function abs(int256 x) private pure returns (uint256) {
-        return x >= 0 ? uint256(x) : uint256(-x);
     }
 }
