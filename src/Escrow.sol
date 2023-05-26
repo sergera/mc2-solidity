@@ -12,7 +12,9 @@ without the prior written permission of MC² Finance.
 pragma solidity ^0.8.0;
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 import {IEscrow} from "./IEscrow.sol";
 
@@ -23,7 +25,7 @@ import {IEscrow} from "./IEscrow.sol";
  * - will immediately return native tokens that get sent to this contract
  */
 
-contract Escrow is Ownable, IEscrow {
+contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     /**
      * @dev Set owner, owner is solely responsible for transferring funds.
      */
@@ -38,14 +40,15 @@ contract Escrow is Ownable, IEscrow {
         IERC20 _token,
         address _recipient,
         uint256 _amount
-    ) external override onlyOwner {
-        _token.transfer(_recipient, _amount);
+    ) external override onlyOwner nonReentrant {
+        SafeERC20.safeTransfer(_token, _recipient, _amount);
+        emit TransferTokenTo(_msgSender(), _recipient, _token, _amount);
     }
 
     /**
      * @dev Return native tokens, if ever sent to this contract.
      */
-    receive() external payable {
+    receive() external payable nonReentrant {
         payable(msg.sender).transfer(msg.value);
     }
 }

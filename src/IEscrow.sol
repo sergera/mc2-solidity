@@ -14,8 +14,17 @@ pragma solidity ^0.8.0;
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 interface IEscrow {
+    event TransferTokenTo(
+        address indexed sender,
+        address indexed recipient,
+        IERC20 indexed token,
+        uint256 amount
+    );
+
     /**
      * @dev Transfer funds to a recipient.
+     *
+     * - MUST emit TransferTokenTo event.
      */
     function transferTokenTo(
         IERC20 token,
