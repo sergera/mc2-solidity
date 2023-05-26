@@ -163,6 +163,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Burns exactly shares from owner and sends assets of underlying tokens to receiver.
      *
      * - MUST emit the Withdraw event.
+     * - MUST revert if shares is 0.
      * - MUST revert if all of shares cannot be redeemed,
      *	 i.e. the owner not having enough shares before the call.
      */

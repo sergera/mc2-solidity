@@ -197,7 +197,14 @@ contract StrategyPool is
         uint256 _shares,
         address _receiver
     ) external override onlyOwner {
-        require(_shares <= maxMint(), "shares more than max");
+        require(
+            _assets.length == _amounts.length,
+            "StrategyPool: deposit arrays length mismatch"
+        );
+        require(
+            _shares <= maxMint(),
+            "StrategyPool: deposit shares more than max"
+        );
         if (assetAddresses.length == 0) {
             /* first deposit, add assets to the pool */
             for (uint256 i = 0; i < _assets.length; i++) {
@@ -226,7 +233,7 @@ contract StrategyPool is
         // slither-disable-next-line reentrancy-no-eth
 
         for (uint256 i = 0; i < _assets.length; i++) {
-            require(_amounts[i] > 0, "cannot deposit 0 amount");
+            require(_amounts[i] > 0, "StrategyPool: deposit 0 amount");
             if (!assetIsOwned(_assets[i])) {
                 addAsset(_assets[i]);
             }
@@ -291,7 +298,7 @@ contract StrategyPool is
     ) external view override returns (IERC20[] memory, uint256[] memory) {
         require(
             _shares <= totalSupply(),
-            "shares greater than available shares"
+            "StrategyPool: preview redeem shares greater than total supply"
         );
 
         return _convertToAssets(_shares, Math.Rounding.Down);
@@ -310,7 +317,11 @@ contract StrategyPool is
         whenNotPaused
         returns (IERC20[] memory, uint256[] memory)
     {
-        require(_shares <= balanceOf(_owner), "redeem more than max");
+        require(_shares > 0, "StrategyPool: redeem 0 shares");
+        require(
+            _shares <= balanceOf(_owner),
+            "StrategyPool: redeem more than balance"
+        );
 
         (IERC20[] memory _assets, uint256[] memory _amounts) = _convertToAssets(
             _shares,
@@ -363,13 +374,10 @@ contract StrategyPool is
         uint256 _amount
     ) external override onlyOwner nonReentrant whenNotPaused {
         _pause();
-        require(
-            assetIsOwned(_asset),
-            "asset is not currently owned by the contract"
-        );
+        require(assetIsOwned(_asset), "StrategyPool: acquire unowned asset");
         require(
             assetBalances[_asset] >= _amount,
-            "amount exceeds owned balance"
+            "StrategyPool: acquire more than balance"
         );
         SafeERC20.safeTransfer(_asset, owner(), _amount);
         assetBalances[_asset] -= _amount;
@@ -389,11 +397,11 @@ contract StrategyPool is
     ) external override onlyOwner nonReentrant whenPaused {
         require(
             _assets.length == _amounts.length,
-            "arrays must be of equal length"
+            "StrategyPool: give back arrays length mismatch"
         );
 
         for (uint256 i = 0; i < _assets.length; i++) {
-            require(_amounts[i] > 0, "cannot give back 0 amount");
+            require(_amounts[i] > 0, "StrategyPool: give back 0 amount");
             if (assetIsOwned(_assets[i])) {
                 /* asset is already owned, acquire it, and add to its balance */
                 SafeERC20.safeTransferFrom(
