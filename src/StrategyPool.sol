@@ -205,12 +205,6 @@ contract StrategyPool is
             _shares <= maxMint(),
             "StrategyPool: deposit shares more than max"
         );
-        if (assetAddresses.length == 0) {
-            /* first deposit, add assets to the pool */
-            for (uint256 i = 0; i < _assets.length; i++) {
-                addAsset(_assets[i]);
-            }
-        }
         _deposit(_msgSender(), _receiver, _assets, _amounts, _shares);
     }
 
