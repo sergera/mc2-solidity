@@ -11,7 +11,7 @@ without the prior written permission of MC² Finance.
 
 pragma solidity ^0.8.0;
 
-import "./IStrategyPool.sol";
+import {IStrategyPool} from "./IStrategyPool.sol";
 
 /**
  * @dev Interface of the MC²Fi StrategyPoolFactory contract

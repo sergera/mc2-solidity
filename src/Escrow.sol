@@ -11,10 +11,10 @@ without the prior written permission of MC² Finance.
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-import "./IEscrow.sol";
+import {IEscrow} from "./IEscrow.sol";
 
 /**
  * @dev MC²Fi Escrow contract

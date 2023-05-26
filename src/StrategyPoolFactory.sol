@@ -11,12 +11,11 @@ without the prior written permission of MC² Finance.
 
 pragma solidity ^0.8.0;
 
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
-import "./IStrategyPool.sol";
-import "./StrategyPool.sol";
-
-import "./IStrategyPoolFactory.sol";
+import {IStrategyPool} from "./IStrategyPool.sol";
+import {StrategyPool} from "./StrategyPool.sol";
+import {IStrategyPoolFactory} from "./IStrategyPoolFactory.sol";
 
 /**
  * @dev Factory contract for the MC²Fi StrategyPool contract
