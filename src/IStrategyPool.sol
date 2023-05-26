@@ -70,30 +70,6 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         returns (IERC20[] memory assets, uint256[] memory balances);
 
     /**
-     * @dev Returns the amount of shares that the Pool would exchange for the amount of assets provided, in an ideal
-     * scenario where all the conditions are met.
-     *
-     * - MUST NOT show any variations depending on the caller.
-     * - MUST revert if input arrays have different lengths.
-     * - MUST revert if Pool is initialized and any input token addresses are not owned by the Pool.
-     * - MUST revert if Pool is initialized and any token address owned by the Pool is missing from input.
-     */
-    function convertToShares(
-        IERC20[] memory assets,
-        uint256[] memory amounts
-    ) external view returns (uint256 shares);
-
-    /**
-     * @dev Returns the addresses and amounts of assets that the Pool would exchange for the amount of shares provided, in an ideal
-     * scenario where all the conditions are met.
-     *
-     * - MUST NOT show any variations depending on the caller.
-     */
-    function convertToAssets(
-        uint256 shares
-    ) external view returns (IERC20[] memory assets, uint256[] memory amounts);
-
-    /**
      * @dev Returns the maximum amount of shares that can be minted without overflowing totalSupply.
      *
      * - MUST NOT revert.
@@ -142,6 +118,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      *
      * - MUST NOT show any variations depending on the caller.
      * - MUST revert if input arrays have different lengths.
+     * - MUST revert if Pool is empty.
      * - MUST revert if any input token addresses are not owned by the Pool.
      * - MUST revert if a token address owned by the Pool is missing from input.
      *
@@ -198,7 +175,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * - MUST NOT account for redemption limits like those returned from maxRedeem and should always act as though the
      *   redemption would be accepted, regardless if the user has enough shares, etc.
      * - MUST be inclusive of withdrawal fees. Integrators should be aware of the existence of withdrawal fees.
-     * - MUST NOT revert.
+     * - MUST revert if shares > totalSupply().
      *
      * NOTE: any unfavorable discrepancy between convertToAssets and previewRedeem SHOULD be considered slippage in
      * share price or some other type of condition, meaning the depositor will lose assets by redeeming.

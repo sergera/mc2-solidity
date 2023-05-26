@@ -86,22 +86,11 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     }
 
     /**
-     * @dev Returns the amount of shares that the Pool would exchange for the amount of assets provided, in an ideal
-     * scenario where all the conditions are met.
-     */
-    function convertToShares(
-        IERC20[] memory _assets,
-        uint256[] memory _amounts
-    ) external view override returns (uint256) {
-        return _convertToShares(_assets, _amounts, Math.Rounding.Down);
-    }
-
-    /**
      * @dev Internal conversion function (from assets to shares) with support for rounding direction.
      *
      * NOTE: the pool is meant to enforce a certain ratio of tokens that can only be changed by the owner,
      * so the share calculation compares each token's amount to the pool's and returns the lesser value of
-     * "shares = inputtedTokenAmount * totalShares / (tokenAmountOwnedByPool + 1)", therefore if the caller does not
+     * "shares = (amount * totalShares) / totalAmountOwnedByPool", therefore if the caller does not
      * abide by the ratio owned by the pool, the caller will receive the least favorable bargain. That is also
      * why this call reverts if any inputted tokens are not owned by the pool, since that would make the denominator "1",
      * giving the caller the most favorable bargain.
@@ -143,19 +132,9 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     }
 
     /**
-     * @dev Returns the amount of assets that the Pool would exchange for the amount of shares provided, in an ideal
-     * scenario where all the conditions are met.
-     *
-     * NOTE: returns the amount of each token according to "amount = inputtedShares * (totalAmountOwnedByPool + 1) / totalShares"
-     */
-    function convertToAssets(
-        uint256 _shares
-    ) external view override returns (IERC20[] memory, uint256[] memory) {
-        return _convertToAssets(_shares, Math.Rounding.Down);
-    }
-
-    /**
      * @dev Internal conversion function (from assets to shares) with support for rounding direction.
+     *
+     * NOTE: returns the amount of each token according to "amount = (shares * totalAmountOwnedByPool) / totalShares"
      */
     function _convertToAssets(
         uint256 _shares,
@@ -266,6 +245,8 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
             "all owned assets must be included"
         );
 
+        require(assetAddresses.length > 0, "pool must be non-empty to preview");
+
         return _convertToShares(_assets, _amounts, Math.Rounding.Down);
     }
 
@@ -367,6 +348,11 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     function previewRedeem(
         uint256 _shares
     ) external view override returns (IERC20[] memory, uint256[] memory) {
+        require(
+            _shares <= totalSupply(),
+            "shares greater than available shares"
+        );
+
         return _convertToAssets(_shares, Math.Rounding.Down);
     }
 
