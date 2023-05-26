@@ -25,20 +25,10 @@ contract StrategyPoolTestBasic is Test {
 
     StrategyPool public strategyPool;
     MockToken public mockToken;
-    uint256 public initialMintAmount;
 
     function setUp() public {
         mockToken = new MockToken();
-        strategyPool = new StrategyPool("Share", "SHARE", address(this), 10000);
-        initialMintAmount = 10000 * 10 ** strategyPool.decimals();
-    }
-
-    function changeInitialDepositShareValue() public {
-        uint256 initialBefore = strategyPool.initialDepositShareValue();
-        assertEq(initialBefore, 10000 * 10 ** strategyPool.decimals());
-        strategyPool.changeInitialDepositShareValue(5);
-        uint256 initialAfter = strategyPool.initialDepositShareValue();
-        assertEq(initialAfter, 5 * 10 ** strategyPool.decimals());
+        strategyPool = new StrategyPool("Share", "SHARE", address(this));
     }
 
     function test_assets() public {
@@ -54,7 +44,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         IERC20[] memory afterAssets = strategyPool.assets();
 
@@ -75,10 +70,14 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         uint256 afterBalance = strategyPool.assetBalance(IERC20(mockToken));
-
         assertEq(afterBalance, 100);
     }
 
@@ -95,7 +94,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         (
             IERC20[] memory afterAssets,
@@ -106,34 +110,6 @@ contract StrategyPoolTestBasic is Test {
         assertEq(address(afterAssets[0]), address(mockToken));
         assertEq(afterBalances.length, 1);
         assertEq(afterBalances[0], 100);
-    }
-
-    function test_convertToShares() public {
-        IERC20[] memory initialAssets = strategyPool.assets();
-        assertEq(initialAssets.length, 0);
-
-        mockToken.mint(address(this), 100);
-        mockToken.approve(address(strategyPool), 100);
-
-        IERC20[] memory newAssets = new IERC20[](1);
-        newAssets[0] = mockToken;
-
-        uint256[] memory newAmounts = new uint256[](1);
-        newAmounts[0] = 100;
-
-        uint256 sharesBefore = strategyPool.convertToShares(
-            newAssets,
-            newAmounts
-        );
-        assertEq(sharesBefore, initialMintAmount);
-
-        strategyPool.deposit(newAssets, newAmounts, address(this));
-
-        uint256 sharesAfter = strategyPool.convertToShares(
-            newAssets,
-            newAmounts
-        );
-        assertEq(sharesAfter, initialMintAmount);
     }
 
     function test_maxMint() public {
@@ -149,10 +125,15 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         uint256 maxShares = strategyPool.maxMint();
-        assertEq(maxShares, type(uint256).max - initialMintAmount);
+        assertEq(maxShares, type(uint256).max - 100 * 10 ** 18);
     }
 
     function test_maxWithdraw() public {
@@ -168,7 +149,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         (
             IERC20[] memory assetsAfter,
@@ -194,7 +180,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         (
             IERC20[] memory assetsAfter,
@@ -222,7 +213,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         (
             IERC20[] memory assetsAfter,
@@ -232,34 +228,6 @@ contract StrategyPoolTestBasic is Test {
         assertEq(address(assetsAfter[0]), address(mockToken));
         assertEq(minAmountsAfter.length, 1);
         assertEq(minAmountsAfter[0], 1);
-    }
-
-    function test_previewDeposit() public {
-        IERC20[] memory initialAssets = strategyPool.assets();
-        assertEq(initialAssets.length, 0);
-
-        mockToken.mint(address(this), 100);
-        mockToken.approve(address(strategyPool), 100);
-
-        IERC20[] memory newAssets = new IERC20[](1);
-        newAssets[0] = mockToken;
-
-        uint256[] memory newAmounts = new uint256[](1);
-        newAmounts[0] = 100;
-
-        uint256 sharesBefore = strategyPool.previewDeposit(
-            newAssets,
-            newAmounts
-        );
-        assertEq(sharesBefore, initialMintAmount);
-
-        strategyPool.deposit(newAssets, newAmounts, address(this));
-
-        uint256 sharesAfter = strategyPool.previewDeposit(
-            newAssets,
-            newAmounts
-        );
-        assertEq(sharesAfter, initialMintAmount);
     }
 
     function test_deposit() public {
@@ -275,9 +243,10 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        uint256 shares = strategyPool.deposit(
+        strategyPool.deposit(
             newAssets,
             newAmounts,
+            100 * 10 ** 18,
             address(this)
         );
 
@@ -290,14 +259,9 @@ contract StrategyPoolTestBasic is Test {
         assertEq(address(afterAssets[0]), address(mockToken));
         assertEq(afterBalances.length, 1);
         assertEq(afterBalances[0], 100);
-        assertEq(shares, initialMintAmount);
-        assertEq(strategyPool.balanceOf(address(this)), initialMintAmount);
-        assertEq(strategyPool.totalSupply(), initialMintAmount);
+        assertEq(strategyPool.balanceOf(address(this)), 100 * 10 ** 18);
+        assertEq(strategyPool.totalSupply(), 100 * 10 ** 18);
         assertEq(mockToken.balanceOf(address(strategyPool)), 100);
-        assertEq(
-            mockToken.allowance(address(strategyPool), address(this)),
-            100
-        );
         assertEq(strategyPool.assetBalances(IERC20(mockToken)), 100);
     }
 
@@ -314,10 +278,15 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         uint256 sharesAfter = strategyPool.maxRedeem(address(this));
-        assertEq(sharesAfter, initialMintAmount);
+        assertEq(sharesAfter, 100 * 10 ** 18);
     }
 
     function test_minRedeem() public {
@@ -330,7 +299,12 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
 
         uint256 minShares = strategyPool.minRedeem();
         uint256 expectedMinShares = strategyPool.totalSupply() /
@@ -358,23 +332,17 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        (
-            IERC20[] memory assetsBefore,
-            uint256[] memory amountsBefore
-        ) = strategyPool.previewRedeem(100);
-        assertEq(assetsBefore.length, 0);
-        assertEq(amountsBefore.length, 0);
-
-        uint256 shares = strategyPool.deposit(
+        strategyPool.deposit(
             newAssets,
             newAmounts,
+            100 * 10 ** 18,
             address(this)
         );
 
         (
             IERC20[] memory assetsAfter,
             uint256[] memory amountsAfter
-        ) = strategyPool.previewRedeem(shares);
+        ) = strategyPool.previewRedeem(100 * 10 ** 18);
         assertEq(assetsAfter.length, 1);
         assertEq(address(assetsAfter[0]), address(mockToken));
         assertEq(amountsAfter.length, 1);
@@ -394,16 +362,17 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newBalances = new uint256[](1);
         newBalances[0] = 100;
 
-        uint256 shares = strategyPool.deposit(
+        strategyPool.deposit(
             newAssets,
             newBalances,
+            100 * 10 ** 18,
             address(this)
         );
 
         (
             IERC20[] memory redeemedAssets,
             uint256[] memory redeemedAmounts
-        ) = strategyPool.redeem(shares, address(this), address(this));
+        ) = strategyPool.redeem(100 * 10 ** 18, address(this), address(this));
 
         (
             IERC20[] memory afterAssets,
@@ -419,12 +388,11 @@ contract StrategyPoolTestBasic is Test {
         assertEq(strategyPool.balanceOf(address(this)), 0);
         assertEq(strategyPool.totalSupply(), 0);
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(mockToken.allowance(address(strategyPool), address(this)), 0);
         assertEq(strategyPool.assets().length, 0);
         assertEq(strategyPool.assetBalances(IERC20(mockToken)), 0);
     }
 
-    function test_changeStrategy() public {
+    function test_acquireAssetBeforeTrade() public {
         IERC20[] memory initialAssets = strategyPool.assets();
         assertEq(initialAssets.length, 0);
 
@@ -437,43 +405,64 @@ contract StrategyPoolTestBasic is Test {
         uint256[] memory newAmounts = new uint256[](1);
         newAmounts[0] = 100;
 
-        strategyPool.deposit(newAssets, newAmounts, address(this));
-
-        mockToken.transferFrom(address(strategyPool), address(this), 50);
-        mockToken.burn(address(this), 50);
-        MockToken mockToken2 = new MockToken();
-        mockToken2.mint(address(this), 100);
-        mockToken2.approve(address(strategyPool), 100);
-
-        IERC20[] memory beforeAssets = new IERC20[](2);
-        beforeAssets[0] = mockToken;
-        beforeAssets[1] = mockToken2;
-
-        int256[] memory beforeBalanceDeltas = new int256[](2);
-        beforeBalanceDeltas[0] = -50;
-        beforeBalanceDeltas[1] = 100;
-
-        strategyPool.changeStrategy(beforeAssets, beforeBalanceDeltas);
-
-        (
-            IERC20[] memory afterAssets,
-            uint256[] memory afterBalances
-        ) = strategyPool.assetsAndBalances();
-
-        assertEq(afterAssets.length, 2);
-        assertEq(address(afterAssets[0]), address(mockToken));
-        assertEq(address(afterAssets[1]), address(mockToken2));
-        assertEq(afterBalances.length, 2);
-        assertEq(afterBalances[0], 50);
-        assertEq(afterBalances[1], 100);
-        assertEq(strategyPool.balanceOf(address(this)), initialMintAmount);
-        assertEq(strategyPool.totalSupply(), initialMintAmount);
-        assertEq(mockToken.balanceOf(address(strategyPool)), 50);
-        assertEq(mockToken.allowance(address(strategyPool), address(this)), 50);
-        assertEq(mockToken2.balanceOf(address(strategyPool)), 100);
-        assertEq(
-            mockToken2.allowance(address(strategyPool), address(this)),
-            100
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
         );
+
+        assertEq(mockToken.balanceOf(address(strategyPool)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(strategyPool.assets().length, 1);
+        assertEq(mockToken.balanceOf(address(this)), 0);
+
+        strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
+
+        assertEq(mockToken.balanceOf(address(strategyPool)), 0);
+        assertEq(strategyPool.assetBalance(mockToken), 0);
+        assertEq(strategyPool.assets().length, 0);
+        assertEq(mockToken.balanceOf(address(this)), 100);
+    }
+
+    function test_giveBackAssetsAfterTrade() public {
+        IERC20[] memory initialAssets = strategyPool.assets();
+        assertEq(initialAssets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newAmounts = new uint256[](1);
+        newAmounts[0] = 100;
+
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        assertEq(mockToken.balanceOf(address(strategyPool)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(strategyPool.assets().length, 1);
+        assertEq(mockToken.balanceOf(address(this)), 0);
+
+        strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
+
+        assertEq(mockToken.balanceOf(address(strategyPool)), 0);
+        assertEq(strategyPool.assetBalance(mockToken), 0);
+        assertEq(strategyPool.assets().length, 0);
+        assertEq(mockToken.balanceOf(address(this)), 100);
+
+        mockToken.approve(address(strategyPool), 100);
+        strategyPool.giveBackAssetsAfterTrade(newAssets, newAmounts);
+
+        assertEq(mockToken.balanceOf(address(strategyPool)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(strategyPool.assets().length, 1);
+        assertEq(mockToken.balanceOf(address(this)), 0);
     }
 }
