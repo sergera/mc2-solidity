@@ -38,7 +38,6 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     IERC20[] public assetAddresses;
     mapping(IERC20 => uint256) private _assetIndices;
     mapping(IERC20 => uint256) public assetBalances;
-    uint256 public initialDepositShareValue;
 
     /**
      * @dev Set owner, owner is solely responsible for deposits and updating assets.
@@ -46,22 +45,9 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     constructor(
         string memory _name,
         string memory _symbol,
-        address _newOwner,
-        uint256 _initialDepositShareValue
+        address _newOwner
     ) ERC20(_name, _symbol) {
         _transferOwnership(_newOwner);
-        initialDepositShareValue = _initialDepositShareValue * 10 ** decimals();
-    }
-
-    /**
-     * @dev Changes initial deposit share value, in case the Pool goes empty, and has to be initialized again.
-     */
-    function changeInitialDepositShareValue(
-        uint256 _newInitialDepositShareValue
-    ) external override onlyOwner {
-        initialDepositShareValue =
-            _newInitialDepositShareValue *
-            10 ** decimals();
     }
 
     /**
@@ -102,13 +88,6 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     /**
      * @dev Returns the amount of shares that the Pool would exchange for the amount of assets provided, in an ideal
      * scenario where all the conditions are met.
-     *
-     * NOTE: the pool is meant to enforce a certain ratio of tokens that can only be changed by the owner,
-     * so the share calculation compares each token's amount to the pool's and returns the lesser value of
-     * "shares = inputtedTokenAmount * totalShares / (tokenAmountOwnedByPool + 1)", therefore if the caller does not
-     * abide by the ratio owned by the pool, the caller will receive the least favorable bargain. That is also
-     * why this call reverts if any inputted tokens are not owned by the pool, since that would make the denominator "1",
-     * giving the caller the most favorable bargain.
      */
     function convertToShares(
         IERC20[] memory _assets,
@@ -119,45 +98,37 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
 
     /**
      * @dev Internal conversion function (from assets to shares) with support for rounding direction.
+     *
+     * NOTE: the pool is meant to enforce a certain ratio of tokens that can only be changed by the owner,
+     * so the share calculation compares each token's amount to the pool's and returns the lesser value of
+     * "shares = inputtedTokenAmount * totalShares / (tokenAmountOwnedByPool + 1)", therefore if the caller does not
+     * abide by the ratio owned by the pool, the caller will receive the least favorable bargain. That is also
+     * why this call reverts if any inputted tokens are not owned by the pool, since that would make the denominator "1",
+     * giving the caller the most favorable bargain.
      */
     function _convertToShares(
         IERC20[] memory _assets,
         uint256[] memory _amounts,
         Math.Rounding _rounding
     ) internal view returns (uint256) {
-        require(
-            _assets.length == _amounts.length,
-            "arrays must be of equal length"
-        );
-
-        if (assetAddresses.length == 0) {
-            /* first deposit, pass initial deposit share value */
-            return initialDepositShareValue;
-        } else {
-            /* nth deposit, use minimum ratio to calculate shares */
+        /* use minimum ratio to calculate shares */
+        uint256 _minShares = type(uint256).max;
+        for (uint256 i = 0; i < _assets.length; i++) {
             require(
-                _assets.length == assetAddresses.length,
-                "all owned assets must be included"
+                _assetIndices[_assets[i]] > 0,
+                "token is not currently owned by the contract"
             );
 
-            uint256 _minShares = type(uint256).max;
-            for (uint256 i = 0; i < _assets.length; i++) {
-                require(
-                    _assetIndices[_assets[i]] > 0,
-                    "token is not currently owned by the contract"
-                );
-
-                uint256 _shares = _convertToSharesSingle(
-                    _assets[i],
-                    _amounts[i],
-                    _rounding
-                );
-                if (_shares < _minShares) {
-                    _minShares = _shares;
-                }
+            uint256 _shares = _convertToSharesSingle(
+                _assets[i],
+                _amounts[i],
+                _rounding
+            );
+            if (_shares < _minShares) {
+                _minShares = _shares;
             }
-            return _minShares;
         }
+        return _minShares;
     }
 
     /**
@@ -285,6 +256,16 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
         IERC20[] memory _assets,
         uint256[] memory _amounts
     ) external view override returns (uint256) {
+        require(
+            _assets.length == _amounts.length,
+            "arrays must be of equal length"
+        );
+
+        require(
+            _assets.length == assetAddresses.length,
+            "all owned assets must be included"
+        );
+
         return _convertToShares(_assets, _amounts, Math.Rounding.Down);
     }
 
@@ -294,13 +275,9 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
     function deposit(
         IERC20[] memory _assets,
         uint256[] memory _amounts,
+        uint256 _shares,
         address _receiver
-    ) external override onlyOwner returns (uint256) {
-        uint256 _shares = _convertToShares(
-            _assets,
-            _amounts,
-            Math.Rounding.Down
-        );
+    ) external override onlyOwner {
         require(_shares <= maxMint(), "deposit more than max");
         if (assetAddresses.length == 0) {
             /* first deposit, add assets to the pool */
@@ -309,8 +286,6 @@ contract StrategyPool is ERC20, Ownable, ReentrancyGuard, IStrategyPool {
             }
         }
         _deposit(_msgSender(), _receiver, _assets, _amounts, _shares);
-
-        return _shares;
     }
 
     /**

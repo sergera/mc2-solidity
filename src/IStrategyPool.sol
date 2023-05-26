@@ -44,11 +44,6 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     );
 
     /**
-     * @dev Changes initial deposit share value, in case the Pool goes empty, and has to be initialized again.
-     */
-    function changeInitialDepositShareValue(uint256 newValue) external;
-
-    /**
      * @dev Returns the address of the underlying tokens used by the Pool for accounting, depositing, and withdrawing.
      *
      * - MUST NOT revert.
@@ -171,8 +166,9 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     function deposit(
         IERC20[] memory assets,
         uint256[] memory amounts,
+        uint256 shares,
         address receiver
-    ) external returns (uint256 shares);
+    ) external;
 
     /**
      * @dev Returns the maximum amount of Pool shares that can be redeemed from the owner balance in the Pool,

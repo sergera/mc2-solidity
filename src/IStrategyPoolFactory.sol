@@ -23,12 +23,10 @@ interface IStrategyPoolFactory {
      * @dev Create a new Pool.
      *
      * - MUST emit the CreatePool event
-     * - MUST revert if the trader already has a Pool
      */
     function createPool(
         string memory name,
-        string memory symbol,
-        uint256 initialDepositShareValue
+        string memory symbol
     ) external returns (IStrategyPool pool);
 
     /**

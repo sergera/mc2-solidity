@@ -40,15 +40,9 @@ contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
      */
     function createPool(
         string memory _name,
-        string memory _symbol,
-        uint256 _initialDepositShareValue
+        string memory _symbol
     ) external override onlyOwner returns (IStrategyPool) {
-        StrategyPool newPool = new StrategyPool(
-            _name,
-            _symbol,
-            owner(),
-            _initialDepositShareValue
-        );
+        StrategyPool newPool = new StrategyPool(_name, _symbol, owner());
         pools.push(newPool);
 
         emit CreatePool(_msgSender(), newPool);
