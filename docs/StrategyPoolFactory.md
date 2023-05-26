@@ -2,6 +2,11 @@
 
 The MC²Fi `StrategyPoolFactory` creates new `StrategyPool`s and keeps their addresses.
 
+## Deployment Addresses
+
+_Goerli:_
+0x65eC8dA4a66198F1551436ab87B42DBcd0CB34Df
+
 ## Owner's Functions
 Owner's functions can only be called by the contract's owner, this contract only has one, which is responsible for creating new Pools.
 
@@ -15,6 +20,8 @@ _Parameters:_
 
 _Description:_
 Should be called by the owner in order to create a new Pool. The owner will also be the owner of the created Pool. This function also emits the `CreatePool` event, which can be listened to off-chain.
+
+---
 
 ### Public Functions
 Public functions can be called by off-chain services or directly by users to retrieve the addresses of created Pools.
