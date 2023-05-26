@@ -94,7 +94,7 @@ contract StrategyPool is
     /**
      * @dev Internal conversion function (from assets to shares) with support for rounding direction.
      *
-     * NOTE: returns the amount of each token according to "amount = (shares * totalAmountOwnedByPool) / totalShares"
+     * NOTE: returns the amount of each token according to 'assets = (shares * totalAssets) / totalShares'.
      */
     function _convertToAssets(
         uint256 _shares,
@@ -145,6 +145,7 @@ contract StrategyPool is
      * @dev Returns the maximum amount of the underlying assets that can be deposited into the Pool through a deposit call.
      *
      * NOTE: returns the maximum amount of assets deposited without overflowing the totalSupply of shares.
+     * NOTE: this assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
      */
     function maxDeposit()
         external
@@ -157,6 +158,8 @@ contract StrategyPool is
 
     /**
      * @dev Returns the minimum amount of underlying assets that can be deposited into the Pool to get a share.
+     *
+     * NOTE: this assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
      */
     function minDeposit()
         external

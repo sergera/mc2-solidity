@@ -86,7 +86,6 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Returns the maximum amount of the underlying assets that can be withdrawn from the owner balance in the
      * Pool, through a redeem call with balanceOf(owner).
      *
-     * - MUST return a limited value if owner is subject to some withdrawal limit or timelock.
      * - MUST NOT revert.
      */
     function maxWithdraw(
@@ -99,7 +98,6 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     /**
      * @dev Returns the maximum amount of the underlying assets that can be deposited into the Pool through a deposit call.
      *
-     * - MUST return a limited value if receiver is subject to some deposit limit.
      * - MUST NOT revert.
      */
     function maxDeposit()
@@ -122,12 +120,10 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
      *
      * - MUST emit the Deposit event.
-     * - MUST revert if amount is 0.
-     * - MUST revert if all of the assets cannot be deposited (due to deposit limit being reached, slippage, the user not
-     *   approving enough underlying tokens to the Pool contract, etc).
+     * - MUST revert if any amount is 0.
      * - MUST revert if minted shares exceed maxMint().
-     *
-     * NOTE: most implementations will require pre-approval of the Pool with the Pool’s underlying asset tokens.
+     * - MUST revert if all of the assets cannot be deposited,
+     *	 i.e. caller not approving enough assets before the call.
      */
     function deposit(
         IERC20[] memory assets,
@@ -140,8 +136,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Returns the maximum amount of Pool shares that can be redeemed from the owner balance in the Pool,
      * through a redeem call.
      *
-     * - MUST return a limited value if owner is subject to some withdrawal limit or timelock.
-     * - MUST return balanceOf(owner) if owner is not subject to any withdrawal limit or timelock.
+     * - MUST return balanceOf(owner).
      * - MUST NOT revert.
      */
     function maxRedeem(address owner) external view returns (uint256 maxShares);
@@ -158,16 +153,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Allows an on-chain or off-chain user to simulate the effects of their redeemption at the current block,
      * given current on-chain conditions.
      *
-     * - MUST return as close to and no more than the exact amount of assets that would be withdrawn in a redeem call
-     *   in the same transaction. I.e. redeem should return the same or more assets as previewRedeem if called in the
-     *   same transaction.
-     * - MUST NOT account for redemption limits like those returned from maxRedeem and should always act as though the
-     *   redemption would be accepted, regardless if the user has enough shares, etc.
-     * - MUST be inclusive of withdrawal fees. Integrators should be aware of the existence of withdrawal fees.
      * - MUST revert if shares > totalSupply().
-     *
-     * NOTE: any unfavorable discrepancy between convertToAssets and previewRedeem SHOULD be considered slippage in
-     * share price or some other type of condition, meaning the depositor will lose assets by redeeming.
      */
     function previewRedeem(
         uint256 shares
@@ -177,11 +163,8 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Burns exactly shares from owner and sends assets of underlying tokens to receiver.
      *
      * - MUST emit the Withdraw event.
-     * - MUST revert if all of shares cannot be redeemed (due to withdrawal limit being reached, slippage, the owner
-     *   not having enough shares, etc).
-     *
-     * NOTE: some implementations will require pre-requesting to the Pool before a withdrawal may be performed.
-     * Those methods should be performed separately.
+     * - MUST revert if all of shares cannot be redeemed,
+     *	 i.e. the owner not having enough shares before the call.
      */
     function redeem(
         uint256 shares,
@@ -203,9 +186,9 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      *
      * - MUST emit the GiveBackAfterTrade event.
      * - MUST revert if input arrays have different lengths.
-     * - MUST revert if amount is 0.
-     * - MUST revert if all of the assets cannot be transfered (due to slippage, the account not
-     *   approving enough underlying tokens to the Pool contract, etc).
+     * - MUST revert if any amount is 0.
+     * - MUST revert if all of the assets cannot be transfered,
+     *	 i.e. the account not approving enough assets before the call.
      */
     function giveBackAssetsAfterTrade(
         IERC20[] calldata assets,
