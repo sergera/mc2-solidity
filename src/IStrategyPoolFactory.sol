@@ -17,7 +17,7 @@ import {IStrategyPool} from "./IStrategyPool.sol";
  * @dev Interface of the MC²Fi StrategyPoolFactory contract
  */
 interface IStrategyPoolFactory {
-    event CreatePool(address indexed sender, IStrategyPool indexed pool);
+    event CreatePool(address indexed sender, uint256 index, IStrategyPool indexed pool);
 
     /**
      * @dev Create a new Pool.
