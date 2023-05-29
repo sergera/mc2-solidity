@@ -25,6 +25,7 @@ interface IStrategyPoolFactory {
      * - MUST emit the CreatePool event
      */
     function createPool(
+        uint256 index,
         string memory name,
         string memory symbol
     ) external returns (IStrategyPool pool);

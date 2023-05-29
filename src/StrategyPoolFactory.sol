@@ -38,13 +38,16 @@ contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
      * @dev Create a new Pool.
      */
     function createPool(
+        uint256 index,
         string memory _name,
         string memory _symbol
     ) external override onlyOwner returns (IStrategyPool) {
         StrategyPool newPool = new StrategyPool(_name, _symbol, owner());
+        if (pools.length != index)
+            revert();
         pools.push(newPool);
 
-        emit CreatePool(_msgSender(), newPool);
+        emit CreatePool(_msgSender(), index, newPool);
 
         return newPool;
     }
@@ -61,11 +64,7 @@ contract StrategyPoolFactory is Ownable, IStrategyPoolFactory {
     /**
      * @dev Returns array of trader addresses that have Pools.
      */
-    function getPools()
-        external
-        view
-        override
-        returns (IStrategyPool[] memory)
+    function getPools() external view override returns (IStrategyPool[] memory)
     {
         return pools;
     }
