@@ -1,4 +1,4 @@
-# StrategyPool Contract Documentation
+# Escrow Contract Documentation
 
 The MC²Fi `Escrow` contract transfers users escrows to the appropriate accounts.
 
