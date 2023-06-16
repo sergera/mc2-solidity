@@ -43,17 +43,17 @@ _Reverts if:_
 - `shares` > `maxMint()`.
 
 _Description:_
-Should be called by the owner before performing a trade. This call will lock the `redeem` function, users should not be able to redeem assets during a strategy change because they would redeem less assets than they are entitled to. This call will lock this function, it cannot be called again until the trade is completed and `giveBackAssetsAfterTrade` is called. This function also emits the `AcquireBeforeTrade` event, which can be listened to off-chain.
+Should be called by the owner before performing a trade. This call will lock the `redeem` function, users should not be able to redeem assets during a strategy change because they would redeem less assets than they are entitled to. This call will lock this function, it cannot be called again until the trade is completed and `giveBackAssetsAfterTrade` is called. This call will lock any view functions with asset related queries to guarantee correctness, precision, and fairness of any calculation made externally, whether it's on-chain or off-chain. This function also emits the `AcquireBeforeTrade` event, which can be listened to off-chain.
 
 The workflow is as follows:
 - owner calls this function
-- Pool locks this function and the `redeem` function
+- Pool locks this function and the `redeem` function, as well as any view functions with asset related queries to guarantee correctness, precision, and fairness of any calculation made externally, whether it's on-chain or off-chain.
 - Pool transfers token amount to owner and updates its balance
 - owner trades assets with itself as the receiver
 - owner approves the Pool contract for tokens and amounts held after the trade
 - owner calls `giveBackAssetsAfterTrade`with tokens and amounts held after the trade
 - Pool transfers tokens after the trade to itself and updates its balances
-- Pool unlocks this function and the `redeem` function
+- Pool unlocks this function and the `redeem` function, as well as any view functions with asset related queries.
 
 ---
 
@@ -71,6 +71,9 @@ _Reverts if:_
 
 _Description:_
 Should be called by the owner after performing a trade. This call will unlock the `acquireAssetBeforeTrade` and `redeem`functions. This function also emits the `GiveBackAfterTrade` event, which can be listened to off-chain.
+
+_NOTE:_
+This function unlocks all functions that were locked with a `acquireAssetBeforeTrade` call.
 
 ---
 
@@ -94,6 +97,9 @@ _Reverts if:_
 _Description:_
 Should be called by a user to retrieve underlying assets by burning his shares. Along with the burn, the underlying asset difference is recorded in the contract's internal balance controls. This function also emits the `Withdraw` event, which can be listened to off-chain.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to protect users from redeeming less assets than they are entitled to.
+
 ---
 
 #### `maxRedeem(address owner) returns (uint256 maxShares)`
@@ -115,6 +121,9 @@ Returns the minimum amount of shares that can be redeemed to the Pool to get at 
 _Description:_
 Should be called from off-chain to check if a redeem call is too small.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
+
 ---
 
 #### `previewRedeem(uint256 shares) returns (IERC20[] assets, uint256[] amounts)`
@@ -130,6 +139,9 @@ _Reverts if:_
 _Description:_
 Should be called from off-chain to show a user how many assets would be acquired for a given share amount.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
+
 ---
 
 
@@ -143,6 +155,9 @@ Should be called from off-chain to check if a deposit is too big. This function 
 _NOTE:_
 This assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
+
 ---
 
 #### `minDeposit() returns (IERC20[] assets, uint256[] minAmounts)`
@@ -155,6 +170,9 @@ Should be called from off-chain to check if a deposit call is too small.
 _NOTE:_
 This assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
+
 ---
 
 #### `assets() returns (IERC20[] assets)`
@@ -163,6 +181,9 @@ Returns the address of the underlying asset addresses used by the Pool for accou
 
 _Description:_
 Should be called from off-chain by any service that requires the Pool's owned asset addresses.
+
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
 
 ---
 
@@ -176,6 +197,9 @@ _Parameters:_
 _Description:_
 Should be called from off-chain by any service that requires the Pool's balance of a given asset.
 
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
+
 ---
 
 #### `assetsAndBalances() returns (IERC20[] assets, uint256[] balances)`
@@ -184,6 +208,9 @@ Returns the addresses and balances of all underlying assets managed by Pool.
 
 _Description:_
 Should be called from off-chain by any service that requires the Pool's current asset strategy, and to show a user the assets and balances held by a given Pool.
+
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
 
 ---
 
@@ -205,5 +232,8 @@ _Parameters:_
 
 _Description:_
 Should be called from off-chain to show a user his portion of the underlying assets of the Pool. This function will check the user's share balance and return the asset conversion for its full amount.
+
+_NOTE:_
+This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to guarantee correctness, precision, and fairness of any external calculations.
 
 ---
