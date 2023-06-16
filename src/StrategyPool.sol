@@ -59,7 +59,13 @@ contract StrategyPool is
     /**
      * @dev Returns array of owned assets.
      */
-    function assets() external view override returns (IERC20[] memory) {
+    function assets()
+        external
+        view
+        override
+        whenNotPaused
+        returns (IERC20[] memory)
+    {
         return assetAddresses;
     }
 
@@ -68,7 +74,7 @@ contract StrategyPool is
      */
     function assetBalance(
         IERC20 _asset
-    ) external view override returns (uint256) {
+    ) external view override whenNotPaused returns (uint256) {
         return assetBalances[_asset];
     }
 
@@ -79,6 +85,7 @@ contract StrategyPool is
         external
         view
         override
+        whenNotPaused
         returns (IERC20[] memory, uint256[] memory)
     {
         uint256 _length = assetAddresses.length;
@@ -137,7 +144,13 @@ contract StrategyPool is
      */
     function maxWithdraw(
         address _owner
-    ) external view override returns (IERC20[] memory, uint256[] memory) {
+    )
+        external
+        view
+        override
+        whenNotPaused
+        returns (IERC20[] memory, uint256[] memory)
+    {
         return _convertToAssets(balanceOf(_owner), Math.Rounding.Down);
     }
 
@@ -151,6 +164,7 @@ contract StrategyPool is
         external
         view
         override
+        whenNotPaused
         returns (IERC20[] memory, uint256[] memory)
     {
         return _convertToAssets(maxMint(), Math.Rounding.Down);
@@ -165,6 +179,7 @@ contract StrategyPool is
         external
         view
         override
+        whenNotPaused
         returns (IERC20[] memory, uint256[] memory)
     {
         uint256[] memory _minAmounts = new uint256[](assetAddresses.length);
@@ -257,7 +272,13 @@ contract StrategyPool is
     /**
      * @dev Returns the minimum amount of shares that can be redeemed to the Pool to get at least 1 of each asset.
      */
-    function minRedeem() external view override returns (uint256) {
+    function minRedeem()
+        external
+        view
+        override
+        whenNotPaused
+        returns (uint256)
+    {
         uint256 _minShares = 0;
         for (uint256 i = 0; i < assetAddresses.length; i++) {
             if (assetBalances[assetAddresses[i]] >= totalSupply()) {
@@ -289,7 +310,13 @@ contract StrategyPool is
      */
     function previewRedeem(
         uint256 _shares
-    ) external view override returns (IERC20[] memory, uint256[] memory) {
+    )
+        external
+        view
+        override
+        whenNotPaused
+        returns (IERC20[] memory, uint256[] memory)
+    {
         require(
             _shares <= totalSupply(),
             "StrategyPool: preview redeem shares greater than total supply"
