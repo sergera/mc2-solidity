@@ -410,8 +410,10 @@ contract StrategyPoolTestBasic is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(strategyPool.assets().length, 0);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = 0
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 0
         assertEq(mockToken.balanceOf(address(this)), 100);
     }
 
@@ -443,8 +445,10 @@ contract StrategyPoolTestBasic is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(strategyPool.assets().length, 0);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = 0
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 0
         assertEq(mockToken.balanceOf(address(this)), 100);
 
         mockToken.approve(address(strategyPool), 100);
@@ -499,8 +503,10 @@ contract StrategyPoolTestChangeStrategy is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0] / 2);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), newAmounts[0] / 2);
-        assertEq(strategyPool.assetBalance(mockToken), newAmounts[0] / 2);
-        assertEq(strategyPool.assets().length, 1);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = newAmounts[0] / 2
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 1
         assertEq(mockToken.balanceOf(address(this)), newAmounts[0] / 2);
 
         vm.expectRevert("Pausable: paused");
@@ -545,8 +551,10 @@ contract StrategyPoolTestChangeStrategy is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(strategyPool.assets().length, 0);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = 0
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 0
         assertEq(mockToken.balanceOf(address(this)), 100);
 
         vm.expectRevert("Pausable: paused");
@@ -599,8 +607,10 @@ contract StrategyPoolTestChangeStrategy is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(strategyPool.assets().length, 0);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = 0
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 0
         assertEq(mockToken.balanceOf(address(this)), 100);
     }
 
@@ -632,8 +642,10 @@ contract StrategyPoolTestChangeStrategy is Test {
         strategyPool.acquireAssetBeforeTrade(newAssets[0], newAmounts[0]);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(strategyPool.assets().length, 0);
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assetBalance(mockToken); // = 0
+        vm.expectRevert("Pausable: paused");
+        strategyPool.assets().length; // = 0
         assertEq(mockToken.balanceOf(address(this)), 100);
 
         mockToken.burn(address(this), 50);
