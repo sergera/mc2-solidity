@@ -11,7 +11,7 @@ import {StrategyPool} from "../src/StrategyPool.sol";
 import {MockToken} from "./MockToken.sol";
 import {Utils} from "./Utils.sol";
 
-contract StrategyPoolTestBasic is Test {
+contract StrategyWalletTestBasic is Test {
     using stdStorage for StdStorage;
     using Math for uint256;
 
