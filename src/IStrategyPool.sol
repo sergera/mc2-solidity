@@ -28,13 +28,16 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         uint256 shares
     );
 
-    event Withdraw(
+    event Redeem(
         address indexed sender,
-        address indexed receiver,
         address indexed owner,
+        uint256 poolTokens
+    );
+
+    event Withdraw(
+        address indexed receiver,
         IERC20[] assets,
-        uint256[] amounts,
-        uint256 shares
+        uint256[] amounts
     );
 
     event AcquireBeforeTrade(
@@ -83,40 +86,6 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     function maxMint() external view returns (uint256 maxShares);
 
     /**
-     * @dev Returns the maximum amount of the underlying assets that can be withdrawn from the owner balance in the
-     * Pool, through a redeem call with balanceOf(owner).
-     *
-     * - MUST NOT revert.
-     */
-    function maxWithdraw(
-        address owner
-    )
-        external
-        view
-        returns (IERC20[] memory assets, uint256[] memory maxAmounts);
-
-    /**
-     * @dev Returns the maximum amount of the underlying assets that can be deposited into the Pool through a deposit call.
-     *
-     * - MUST NOT revert.
-     */
-    function maxDeposit()
-        external
-        view
-        returns (IERC20[] memory assets, uint256[] memory maxAmounts);
-
-    /**
-     * @dev Returns the minimum amount of underlying assets that can be deposited into the Pool to get a share.
-     *
-     * - MUST return empty arrays if the Pool is empty.
-     * - MUST NOT revert.
-     */
-    function minDeposit()
-        external
-        view
-        returns (IERC20[] memory assets, uint256[] memory minAmounts);
-
-    /**
      * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
      *
      * - MUST emit the Deposit event.
@@ -142,36 +111,27 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     function maxRedeem(address owner) external view returns (uint256 maxShares);
 
     /**
-     * @dev Returns the minimum amount of shares that can be redeemed to the Pool to get at least 1 of each asset.
+     * @dev Burns exactly shares from owner.
      *
-     * - MUST return 0 if the Pool is empty.
-     * - MUST NOT revert.
-     */
-    function minRedeem() external view returns (uint256 minShares);
-
-    /**
-     * @dev Allows an on-chain or off-chain user to simulate the effects of their redeemption at the current block,
-     * given current on-chain conditions.
-     *
-     * - MUST revert if shares > totalSupply().
-     */
-    function previewRedeem(
-        uint256 shares
-    ) external view returns (IERC20[] memory assets, uint256[] memory amounts);
-
-    /**
-     * @dev Burns exactly shares from owner and sends assets of underlying tokens to receiver.
-     *
-     * - MUST emit the Withdraw event.
+     * - MUST emit the Redeem event.
      * - MUST revert if shares is 0.
      * - MUST revert if all of shares cannot be redeemed,
      *	 i.e. the owner not having enough shares before the call.
      */
-    function redeem(
-        uint256 shares,
+    function redeem(address owner, uint256 shares) external;
+
+    /**
+     * @dev Sends assets of underlying tokens to receiver.
+     *
+     * - MUST emit the Withdraw event.
+     * - MUST revert if all of assets cannot be withdrawn,
+     *	 i.e. the pool not having enough assets before the call.
+     */
+    function withdraw(
         address receiver,
-        address owner
-    ) external returns (IERC20[] memory assets, uint256[] memory amounts);
+        IERC20[] memory assets,
+        uint256[] memory amounts
+    ) external;
 
     /**
      * @dev Owner acquires Pool's asset to perform trade / strategy change.

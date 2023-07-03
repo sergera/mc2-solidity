@@ -19,6 +19,8 @@ import {Pausable} from "openzeppelin-contracts/contracts/security/Pausable.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
+import {IStrategyPoolHerald} from "./IStrategyPoolHerald.sol";
+
 import {IStrategyPool} from "./IStrategyPool.sol";
 
 /**
@@ -28,9 +30,6 @@ import {IStrategyPool} from "./IStrategyPool.sol";
  * - allows for multiple underlying tokens
  * - keeps track of currently owned tokens, no possible donation attacks
  * - represents a dynamic token strategy, owner can change the underlying tokens and their ratios
- * - gated-entry, only owner can deposit
- * - burns shares on withdrawal
- * - for simplicity the only entry is deposit, and the only exit is redeem
  */
 contract StrategyPool is
     ERC20,
@@ -42,8 +41,9 @@ contract StrategyPool is
     using Math for uint256;
 
     IERC20[] public assetAddresses;
-    mapping(IERC20 => uint256) private _assetIndices;
+    mapping(IERC20 => uint256) private __assetIndices;
     mapping(IERC20 => uint256) public assetBalances;
+    IStrategyPoolHerald private __herald;
 
     /**
      * @dev Set owner, owner is solely responsible for deposits and updating assets.
@@ -51,9 +51,11 @@ contract StrategyPool is
     constructor(
         string memory _name,
         string memory _symbol,
-        address _newOwner
+        address _newOwner,
+        IStrategyPoolHerald _herald
     ) ERC20(_name, _symbol) {
         _transferOwnership(_newOwner);
+        __herald = _herald;
     }
 
     /**
@@ -99,108 +101,10 @@ contract StrategyPool is
     }
 
     /**
-     * @dev Internal conversion function (from assets to shares) with support for rounding direction.
-     *
-     * NOTE: returns the amount of each token according to 'assets = (shares * totalAssets) / totalShares'.
-     */
-    function _convertToAssets(
-        uint256 _shares,
-        Math.Rounding _rounding
-    ) internal view returns (IERC20[] memory, uint256[] memory) {
-        uint256 _length = assetAddresses.length;
-        uint256[] memory _amounts = new uint256[](_length);
-        for (uint256 i = 0; i < _length; i++) {
-            _amounts[i] = _convertToAssetsSingle(
-                assetAddresses[i],
-                _shares,
-                _rounding
-            );
-        }
-
-        return (assetAddresses, _amounts);
-    }
-
-    /**
-     * @dev Internal conversion function (from shares to single asset) with support for rounding direction.
-     */
-    function _convertToAssetsSingle(
-        IERC20 _asset,
-        uint256 _shares,
-        Math.Rounding _rounding
-    ) internal view returns (uint256) {
-        return _shares.mulDiv(assetBalances[_asset], totalSupply(), _rounding);
-    }
-
-    /**
      * @dev Returns the maximum amount of shares that can be minted without overflowing totalSupply.
      */
     function maxMint() public view override returns (uint256) {
         return type(uint256).max - totalSupply();
-    }
-
-    /**
-     * @dev Returns the maximum amount of the underlying asset that can be withdrawn from the owner balance in the
-     * Pool, through a withdraw call.
-     */
-    function maxWithdraw(
-        address _owner
-    )
-        external
-        view
-        override
-        whenNotPaused
-        returns (IERC20[] memory, uint256[] memory)
-    {
-        return _convertToAssets(balanceOf(_owner), Math.Rounding.Down);
-    }
-
-    /**
-     * @dev Returns the maximum amount of the underlying assets that can be deposited into the Pool through a deposit call.
-     *
-     * NOTE: returns the maximum amount of assets deposited without overflowing the totalSupply of shares.
-     * NOTE: this assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
-     */
-    function maxDeposit()
-        external
-        view
-        override
-        whenNotPaused
-        returns (IERC20[] memory, uint256[] memory)
-    {
-        return _convertToAssets(maxMint(), Math.Rounding.Down);
-    }
-
-    /**
-     * @dev Returns the minimum amount of underlying assets that can be deposited into the Pool to get a share.
-     *
-     * NOTE: this assumes the share calculation to be 'shares = (assets * totalShares) / totalAssets'.
-     */
-    function minDeposit()
-        external
-        view
-        override
-        whenNotPaused
-        returns (IERC20[] memory, uint256[] memory)
-    {
-        uint256[] memory _minAmounts = new uint256[](assetAddresses.length);
-        for (uint256 i = 0; i < assetAddresses.length; i++) {
-            if (totalSupply() >= assetBalances[assetAddresses[i]]) {
-                /* if total shares >= total assets, any assets amount will mint a share */
-                _minAmounts[i] = 1;
-            } else {
-                /* if total assets > total shares, assets > total assets / total shares will mint a share */
-                /* we add 1 if not perfectly divisible because the uint division will produce the floor */
-                _minAmounts[i] =
-                    assetBalances[assetAddresses[i]] /
-                    totalSupply() +
-                    (
-                        assetBalances[assetAddresses[i]] % totalSupply() == 0
-                            ? 0
-                            : 1
-                    );
-            }
-        }
-        return (assetAddresses, _minAmounts);
     }
 
     /**
@@ -270,112 +174,35 @@ contract StrategyPool is
     }
 
     /**
-     * @dev Returns the minimum amount of shares that can be redeemed to the Pool to get at least 1 of each asset.
-     */
-    function minRedeem()
-        external
-        view
-        override
-        whenNotPaused
-        returns (uint256)
-    {
-        uint256 _minShares = 0;
-        for (uint256 i = 0; i < assetAddresses.length; i++) {
-            if (assetBalances[assetAddresses[i]] >= totalSupply()) {
-                /* if total assets >= total shares, any shares amount will redeem an asset */
-                if (_minShares < 1) {
-                    _minShares = 1;
-                }
-            } else {
-                /* if total shares > total assets, shares > total shares / total assets will redeem an asset */
-                /* we add 1 if not perfectly divisible because the uint division will produce the floor */
-                uint256 _minSharesForToken = totalSupply() /
-                    assetBalances[assetAddresses[i]] +
-                    (
-                        totalSupply() % assetBalances[assetAddresses[i]] == 0
-                            ? 0
-                            : 1
-                    );
-                if (_minShares < _minSharesForToken) {
-                    _minShares = _minSharesForToken;
-                }
-            }
-        }
-        return _minShares;
-    }
-
-    /**
-     * @dev Allows an on-chain or off-chain user to simulate the effects of their redeemption at the current block,
-     * given current on-chain conditions.
-     */
-    function previewRedeem(
-        uint256 _shares
-    )
-        external
-        view
-        override
-        whenNotPaused
-        returns (IERC20[] memory, uint256[] memory)
-    {
-        require(
-            _shares <= totalSupply(),
-            "StrategyPool: preview redeem shares greater than total supply"
-        );
-
-        return _convertToAssets(_shares, Math.Rounding.Down);
-    }
-
-    /**
-     * @dev Burns exactly shares from owner and sends assets of underlying tokens to receiver.
+     * @dev Burns exactly shares from owner.
      */
     function redeem(
-        uint256 _shares,
-        address _receiver,
-        address _owner
-    )
-        external
-        override
-        whenNotPaused
-        returns (IERC20[] memory, uint256[] memory)
-    {
+        address _owner,
+        uint256 _shares
+    ) external override whenNotPaused {
         require(_shares > 0, "StrategyPool: redeem 0 shares");
         require(
             _shares <= balanceOf(_owner),
             "StrategyPool: redeem more than balance"
         );
 
-        (IERC20[] memory _assets, uint256[] memory _amounts) = _convertToAssets(
-            _shares,
-            Math.Rounding.Down
-        );
-        _withdraw(_msgSender(), _receiver, _owner, _assets, _amounts, _shares);
+        if (_msgSender() != _owner) {
+            _spendAllowance(_owner, _msgSender(), _shares);
+        }
 
-        return (_assets, _amounts);
+        _burn(_owner, _shares);
+        emit Redeem(_msgSender(), _owner, _shares);
+        __herald.proclaimRedeem(_owner, _shares);
     }
 
     /**
-     * @dev Withdraw/redeem common workflow.
+     * @dev Sends underlying assets to receiver.
      */
-    function _withdraw(
-        address _caller,
+    function withdraw(
         address _receiver,
-        address _owner,
         IERC20[] memory _assets,
-        uint256[] memory _amounts,
-        uint256 _shares
-    ) internal nonReentrant {
-        if (_caller != _owner) {
-            _spendAllowance(_owner, _caller, _shares);
-        }
-
-        // If _asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
-        // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
-        // calls the Pool, which is assumed not malicious.
-        //
-        // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
-        // shares are burned and after the assets are transferred, which is a valid state.
-        _burn(_owner, _shares);
-
+        uint256[] memory _amounts
+    ) external override whenNotPaused nonReentrant onlyOwner {
         for (uint256 i = 0; i < _assets.length; i++) {
             SafeERC20.safeTransfer(_assets[i], _receiver, _amounts[i]);
             assetBalances[_assets[i]] -= _amounts[i];
@@ -384,7 +211,7 @@ contract StrategyPool is
             }
         }
 
-        emit Withdraw(_caller, _receiver, _owner, _assets, _amounts, _shares);
+        emit Withdraw(_receiver, _assets, _amounts);
     }
 
     /**
@@ -472,27 +299,27 @@ contract StrategyPool is
 
         setAssetIndex(_lastAsset, _index);
 
-        delete _assetIndices[_asset];
+        delete __assetIndices[_asset];
     }
 
     /**
      * @dev Gets the actual index of the asset in "assets" array.
      */
     function getAssetIndex(IERC20 _asset) private view returns (uint256) {
-        return _assetIndices[_asset] - 1;
+        return __assetIndices[_asset] - 1;
     }
 
     /**
-     * @dev Inserts an actual index of the asset in "assets" array into "_assetIndices" mapping.
+     * @dev Inserts an actual index of the asset in "assets" array into "__assetIndices" mapping.
      */
     function setAssetIndex(IERC20 _asset, uint256 _index) private {
-        _assetIndices[_asset] = _index + 1;
+        __assetIndices[_asset] = _index + 1;
     }
 
     /**
      * @dev Returns a bool indicating if the asset is currently owned by the strategy pool.
      */
     function assetIsOwned(IERC20 _asset) private view returns (bool) {
-        return _assetIndices[_asset] != 0;
+        return __assetIndices[_asset] != 0;
     }
 }
