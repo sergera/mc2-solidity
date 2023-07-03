@@ -101,19 +101,19 @@ contract StrategyPool is
     }
 
     /**
-     * @dev Returns the maximum amount of shares that can be minted without overflowing totalSupply.
+     * @dev Returns the maximum amount of Pool tokens that can be minted without overflowing totalSupply.
      */
     function maxMint() public view override returns (uint256) {
         return type(uint256).max - totalSupply();
     }
 
     /**
-     * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
+     * @dev Mints poolTokens to receiver by depositing exactly amount of underlying assets.
      */
     function deposit(
         IERC20[] memory _assets,
         uint256[] memory _amounts,
-        uint256 _shares,
+        uint256 _poolTokens,
         address _receiver
     ) external override onlyOwner {
         require(
@@ -121,10 +121,10 @@ contract StrategyPool is
             "StrategyPool: deposit arrays length mismatch"
         );
         require(
-            _shares <= maxMint(),
-            "StrategyPool: deposit shares more than max"
+            _poolTokens <= maxMint(),
+            "StrategyPool: deposit pool tokens more than max"
         );
-        _deposit(_msgSender(), _receiver, _assets, _amounts, _shares);
+        _deposit(_msgSender(), _receiver, _assets, _amounts, _poolTokens);
     }
 
     /**
@@ -135,14 +135,14 @@ contract StrategyPool is
         address _receiver,
         IERC20[] memory _assets,
         uint256[] memory _amounts,
-        uint256 _shares
+        uint256 _poolTokens
     ) internal nonReentrant {
         // If _asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
         // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
         // calls the Pool, which is assumed not malicious.
         //
         // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
-        // assets are transferred and before the shares are minted, which is a valid state.
+        // assets are transferred and before the poolTokens are minted, which is a valid state.
         // slither-disable-next-line reentrancy-no-eth
 
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -158,13 +158,13 @@ contract StrategyPool is
             );
             assetBalances[_assets[i]] += _amounts[i];
         }
-        _mint(_receiver, _shares);
+        _mint(_receiver, _poolTokens);
 
-        emit Deposit(_caller, _receiver, _assets, _amounts, _shares);
+        emit Deposit(_caller, _receiver, _assets, _amounts, _poolTokens);
     }
 
     /**
-     * @dev Returns the maximum amount of Pool shares that can be redeemed from the owner balance in the Pool,
+     * @dev Returns the maximum amount of Pool tokens that can be redeemed from the owner balance in the Pool,
      * through a redeem call.
      */
     function maxRedeem(
@@ -174,25 +174,25 @@ contract StrategyPool is
     }
 
     /**
-     * @dev Burns exactly shares from owner.
+     * @dev Burns exactly poolTokens from owner.
      */
     function redeem(
         address _owner,
-        uint256 _shares
+        uint256 _poolTokens
     ) external override whenNotPaused {
-        require(_shares > 0, "StrategyPool: redeem 0 shares");
+        require(_poolTokens > 0, "StrategyPool: redeem 0 pool tokens");
         require(
-            _shares <= balanceOf(_owner),
+            _poolTokens <= balanceOf(_owner),
             "StrategyPool: redeem more than balance"
         );
 
         if (_msgSender() != _owner) {
-            _spendAllowance(_owner, _msgSender(), _shares);
+            _spendAllowance(_owner, _msgSender(), _poolTokens);
         }
 
-        _burn(_owner, _shares);
-        emit Redeem(_msgSender(), _owner, _shares);
-        __herald.proclaimRedeem(_owner, _shares);
+        _burn(_owner, _poolTokens);
+        emit Redeem(_msgSender(), _owner, _poolTokens);
+        __herald.proclaimRedeem(_owner, _poolTokens);
     }
 
     /**

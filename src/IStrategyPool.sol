@@ -25,7 +25,7 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         address indexed owner,
         IERC20[] assets,
         uint256[] amounts,
-        uint256 shares
+        uint256 poolTokens
     );
 
     event Redeem(
@@ -79,46 +79,48 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         returns (IERC20[] memory assets, uint256[] memory balances);
 
     /**
-     * @dev Returns the maximum amount of shares that can be minted without overflowing totalSupply.
+     * @dev Returns the maximum amount of Pool tokens that can be minted without overflowing totalSupply.
      *
      * - MUST NOT revert.
      */
-    function maxMint() external view returns (uint256 maxShares);
+    function maxMint() external view returns (uint256 maxPoolTokens);
 
     /**
-     * @dev Mints shares Pool shares to receiver by depositing exactly amount of underlying tokens.
+     * @dev Mints poolTokens to receiver by depositing exactly amount of underlying assets.
      *
      * - MUST emit the Deposit event.
      * - MUST revert if any amount is 0.
-     * - MUST revert if minted shares exceed maxMint().
+     * - MUST revert if minted poolTokens exceed maxMint().
      * - MUST revert if all of the assets cannot be deposited,
      *	 i.e. caller not approving enough assets before the call.
      */
     function deposit(
         IERC20[] memory assets,
         uint256[] memory amounts,
-        uint256 shares,
+        uint256 poolTokens,
         address receiver
     ) external;
 
     /**
-     * @dev Returns the maximum amount of Pool shares that can be redeemed from the owner balance in the Pool,
+     * @dev Returns the maximum amount of Pool tokens that can be redeemed from the owner balance in the Pool,
      * through a redeem call.
      *
      * - MUST return balanceOf(owner).
      * - MUST NOT revert.
      */
-    function maxRedeem(address owner) external view returns (uint256 maxShares);
+    function maxRedeem(
+        address owner
+    ) external view returns (uint256 maxPoolTokens);
 
     /**
-     * @dev Burns exactly shares from owner.
+     * @dev Burns exactly poolTokens from owner.
      *
      * - MUST emit the Redeem event.
-     * - MUST revert if shares is 0.
-     * - MUST revert if all of shares cannot be redeemed,
-     *	 i.e. the owner not having enough shares before the call.
+     * - MUST revert if poolTokens is 0.
+     * - MUST revert if all of poolTokens cannot be redeemed,
+     *	 i.e. the owner not having enough poolTokens before the call.
      */
-    function redeem(address owner, uint256 shares) external;
+    function redeem(address owner, uint256 poolTokens) external;
 
     /**
      * @dev Sends assets of underlying tokens to receiver.
