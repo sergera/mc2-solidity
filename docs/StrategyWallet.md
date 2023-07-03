@@ -1,17 +1,17 @@
 # Strategy Wallet Contract Documentation
 
-The MC²Fi `StrategyWallet` contract holds backer's shares for all backed `StrategyPool`s.
+The MC²Fi `StrategyWallet` contract holds backer's Pool tokens for all backed `StrategyPool`s.
 
 It holds the address for a Backer account, and optionally, an Admin account, that can call certain functions in the Backer's name.
 
 Both are parameterized in the constructor (`address(0)` for no Admin), and after contract creation the backer can:
-- redeem shares from a `StrategyPool`
+- redeem Pool tokens from a `StrategyPool`
 - change the Admin account
 - revoke the Admin account
 - change the Backer account
 
 , and the Admin can:
-- redeem shares from a `StrategyPool`
+- redeem Pool tokens from a `StrategyPool`
 - change the Admin account
 - revoke the Admin account
 
@@ -20,41 +20,41 @@ Functions that can only be called by the contract's backer (parameterized in the
 
 #### `transferBackership(address newBacker)`
 
-Changes this contract's Backer account to another account. This means that the new account will be the recipient of all tokens from redeeming this contract's SP shares from now on.
+Changes this contract's Backer account to another account. This means that the new account will the only one (other than the admin, if there is one) able to redeem this contract's Pool tokens from now on.
 
 _Parameters:_
 - `newBacker`: Address of new Backer account.
 
 _Description:_
-Should be called by the Backer in order to change the account that receives underlying tokens from any SP's shares it may own. This function also emits the `BackershipTransferred` event, which can be listened to off-chain.
+Should be called by the Backer in order to change the account that redeems Pool tokens this contract may own. This function also emits the `BackershipTransferred` event, which can be listened to off-chain.
 
 ---
 
 ## Backer or Admin's Functions
 Functions that can be called by the contract's backer or by the contract's Admin (in case there currently is one), they are related to redeem calls, and changing admin account.
 
-#### `redeemFromStrategy(IStrategyPool strategy, uint256 shares)`
+#### `redeemFromStrategy(IStrategyPool strategy, uint256 poolTokens)`
 
-Redeems an amount of shares of a given `StrategyPool` owned by this contract to the registered Backer address.
+Redeems an amount of Pool tokens of a given `StrategyPool` owned by this contract.
 
 _Parameters:_
 - `strategy`: Address of the `StrategyPool` contract.
-- `shares`: Amount to be redeemed.
+- `poolTokens`: Amount to be redeemed.
 
 _Description:_
-Should be called by the Backer or the Admin in order to redeem shares for the Backer address. This function also emits the `RedeemedFromStrategy` event, which can be listened to off-chain.
+Should be called by the Backer or the Admin in order to redeem Pool tokens. This function also emits the `RedeemedFromStrategy` event, which can be listened to off-chain.
 
 ---
 
 #### `fullRedeemFromStrategy(IStrategyPool strategy)`
 
-Redeems the total amount of shares of a given `StrategyPool` owned by this contract to the registered Backer address.
+Redeems the total amount of Pool tokens of a given `StrategyPool` owned by this contract.
 
 _Parameters:_
 - `strategy`: Address of the `StrategyPool` contract.
 
 _Description:_
-Should be called by the Backer or the Admin in order to redeem shares for the Backer address. This function also emits the `RedeemedFromStrategy` event, which can be listened to off-chain.
+Should be called by the Backer or the Admin in order to redeem Pool tokens. This function also emits the `RedeemedFromStrategy` event, which can be listened to off-chain.
 
 ---
 

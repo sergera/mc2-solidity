@@ -33,7 +33,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
         address indexed sender,
         IStrategyPool indexed strategy,
         address indexed backer,
-        uint256 shares
+        uint256 poolTokens
     );
     event BackershipTransferred(
         address indexed previousBacker,
@@ -57,27 +57,37 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
-     * @dev Redeems all shares from (`_strategy`) to the current backer's address.
+     * @dev Redeems all Pool tokens from (`_strategy`) to the current backer's address.
      * Can only be called by the current backer or the current admin (if an admin exists).
      */
     function fullRedeemFromStrategy(
         IStrategyPool _strategy
     ) external onlyBackerOrAdmin nonReentrant {
-        uint256 _shares = _strategy.balanceOf(address(this));
-        _strategy.redeem(address(this), _shares);
-        emit RedeemedFromStrategy(_msgSender(), _strategy, backer(), _shares);
+        uint256 _poolTokens = _strategy.balanceOf(address(this));
+        _strategy.redeem(address(this), _poolTokens);
+        emit RedeemedFromStrategy(
+            _msgSender(),
+            _strategy,
+            backer(),
+            _poolTokens
+        );
     }
 
     /**
-     * @dev Redeems (`_shares`) from (`_strategy`) to the current backer's address.
+     * @dev Redeems (`_poolTokens`) from (`_strategy`) to the current backer's address.
      * Can only be called by the current backer or the current admin (if an admin exists).
      */
     function redeemFromStrategy(
         IStrategyPool _strategy,
-        uint256 _shares
+        uint256 _poolTokens
     ) external onlyBackerOrAdmin nonReentrant {
-        _strategy.redeem(address(this), _shares);
-        emit RedeemedFromStrategy(_msgSender(), _strategy, backer(), _shares);
+        _strategy.redeem(address(this), _poolTokens);
+        emit RedeemedFromStrategy(
+            _msgSender(),
+            _strategy,
+            backer(),
+            _poolTokens
+        );
     }
 
     /**
@@ -106,7 +116,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
-     * @dev Transfers ownership of StrategyPool shares to a new account (`_newBacker`).
+     * @dev Transfers ownership of StrategyPool tokens to a new account (`_newBacker`).
      * Can only be called by the current backer.
      */
     function transferBackership(address _newBacker) external onlyBacker {
@@ -128,7 +138,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
-     * @dev Transfers ownership of StrategyPool shares to a new account (`_newBacker`).
+     * @dev Transfers ownership of StrategyPool tokens to a new account (`_newBacker`).
      * Internal function without access restriction.
      */
     function _transferBackership(address _newBacker) private {
