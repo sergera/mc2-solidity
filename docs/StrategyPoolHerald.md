@@ -13,6 +13,9 @@ _Goerli:_
 _BSC_:
 0x52f47C22F0138f8c6251b6A4dD6E93ee693116e1
 
+_BSC Testnet_:
+0x0893abEB433C1a3D63C60F7034c2582Fc7dc8c52
+
 ### Public Functions
 All functions in this contract are public, considering that the validity of the events can always be checked since they include the caller address.
 
