@@ -8,6 +8,7 @@ import {console} from "forge-std/console.sol";
 
 import {StrategyWallet} from "../src/StrategyWallet.sol";
 import {StrategyPool} from "../src/StrategyPool.sol";
+import {StrategyPoolHerald} from "../src/StrategyPoolHerald.sol";
 import {MockToken} from "./MockToken.sol";
 import {Utils} from "./Utils.sol";
 
@@ -22,6 +23,7 @@ contract StrategyWalletTestBasic is Test {
     address public bob;
 
     StrategyPool public strategyPool;
+    StrategyPoolHerald public poolHerald;
     MockToken public mockToken;
     StrategyWallet public strategyWallet;
 
@@ -35,7 +37,13 @@ contract StrategyWalletTestBasic is Test {
         strategyWallet = new StrategyWallet(backer, admin);
 
         mockToken = new MockToken();
-        strategyPool = new StrategyPool("Share", "SHARE", address(this));
+        poolHerald = new StrategyPoolHerald();
+        strategyPool = new StrategyPool(
+            "Share",
+            "SHARE",
+            address(this),
+            poolHerald
+        );
         mockToken.mint(address(this), 100);
 
         mockToken.approve(address(strategyPool), 100);
@@ -124,15 +132,11 @@ contract StrategyWalletTestBasic is Test {
         vm.prank(backer);
         strategyWallet.redeemFromStrategy(strategyPool, 10);
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 90);
-        assertEq(strategyPool.assetBalance(mockToken), 90);
-        assertEq(mockToken.balanceOf(backer), 10);
 
         // admin can redeem for backer
         vm.prank(admin);
         strategyWallet.redeemFromStrategy(strategyPool, 10);
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 80);
-        assertEq(strategyPool.assetBalance(mockToken), 80);
-        assertEq(mockToken.balanceOf(backer), 20);
 
         // someone else cannot redeem
         vm.prank(alice);
@@ -145,26 +149,22 @@ contract StrategyWalletTestBasic is Test {
     function test_fullRedeemFromStrategyAsBacker() public {
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
-        assertEq(mockToken.balanceOf(backer), 0);
 
         vm.prank(backer);
         strategyWallet.fullRedeemFromStrategy(strategyPool);
 
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(mockToken.balanceOf(backer), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
     }
 
     function test_fullRedeemFromStrategyAsAdmin() public {
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
-        assertEq(mockToken.balanceOf(backer), 0);
 
         vm.prank(admin);
         strategyWallet.fullRedeemFromStrategy(strategyPool);
 
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 0);
-        assertEq(strategyPool.assetBalance(mockToken), 0);
-        assertEq(mockToken.balanceOf(backer), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
     }
 }
