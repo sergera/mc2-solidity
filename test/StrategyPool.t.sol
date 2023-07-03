@@ -786,7 +786,7 @@ contract StrategyPoolTestRedeemWithdraw is Test {
             address(this)
         );
 
-        vm.expectRevert("StrategyPool: redeem 0 shares");
+        vm.expectRevert("StrategyPool: redeem 0 pool tokens");
         strategyPool.redeem(address(this), 0);
     }
 
