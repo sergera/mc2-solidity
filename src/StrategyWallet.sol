@@ -64,7 +64,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
         IStrategyPool _strategy
     ) external onlyBackerOrAdmin nonReentrant {
         uint256 _poolTokens = _strategy.balanceOf(address(this));
-        _strategy.redeem(address(this), _poolTokens);
+        _strategy.redeem(address(this), backer(), _poolTokens);
         emit RedeemedFromStrategy(
             _msgSender(),
             _strategy,
@@ -81,7 +81,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
         IStrategyPool _strategy,
         uint256 _poolTokens
     ) external onlyBackerOrAdmin nonReentrant {
-        _strategy.redeem(address(this), _poolTokens);
+        _strategy.redeem(address(this), backer(), _poolTokens);
         emit RedeemedFromStrategy(
             _msgSender(),
             _strategy,
