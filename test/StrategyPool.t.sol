@@ -213,7 +213,7 @@ contract StrategyPoolTestBasic is Test {
             address(this)
         );
 
-        strategyPool.redeem(address(this), 100 * 10 ** 18);
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
 
         (
             IERC20[] memory afterAssets,
@@ -249,7 +249,7 @@ contract StrategyPoolTestBasic is Test {
             address(this)
         );
 
-        strategyPool.redeem(address(this), 100 * 10 ** 18);
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
         strategyPool.withdraw(address(this), newAssets, newBalances);
 
         (
@@ -449,7 +449,7 @@ contract StrategyPoolTestChangeStrategy is Test {
         assertEq(mockToken.balanceOf(address(this)), 100);
 
         vm.expectRevert("Pausable: paused");
-        strategyPool.redeem(address(this), 100 * 10 ** 18);
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
 
         mockToken.approve(address(strategyPool), 100);
         strategyPool.giveBackAssetsAfterTrade(newAssets, newAmounts);
@@ -459,7 +459,7 @@ contract StrategyPoolTestChangeStrategy is Test {
         assertEq(strategyPool.assets().length, 1);
         assertEq(mockToken.balanceOf(address(this)), 0);
 
-        strategyPool.redeem(address(this), 100 * 10 ** 18);
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
 
         assertEq(mockToken.balanceOf(address(strategyPool)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
@@ -787,7 +787,7 @@ contract StrategyPoolTestRedeemWithdraw is Test {
         );
 
         vm.expectRevert("StrategyPool: redeem 0 pool tokens");
-        strategyPool.redeem(address(this), 0);
+        strategyPool.redeem(address(this), address(this), 0);
     }
 
     function test_withdrawTransfersTokens() public {
@@ -929,7 +929,7 @@ contract StrategyPoolTestRedeemWithdraw is Test {
         assertEq(strategyPool.balanceOf(address(this)), 100 * 10 ** 18);
         assertEq(strategyPool.totalSupply(), 100 * 10 ** 18);
 
-        strategyPool.redeem(address(this), 100 * 10 ** 18);
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
 
         assertEq(strategyPool.balanceOf(address(this)), 0);
         assertEq(strategyPool.totalSupply(), 0);
