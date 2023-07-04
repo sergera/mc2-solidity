@@ -24,7 +24,8 @@ All functions in this contract are public, considering that the validity of the 
 Emits the "Redeem" event containing the caller address, and the parameterized owner address and amount.
 
 _Parameters:_
-- `owner`: Address of the owner of pool tokens.
+- `owner`: Address of the owner of pool tokens (should be a StrategyWallet contract).
+- `receiver`: Address of the owner of pool tokens (should be the backer registered in the StrategyWallet).
 - `amount`: Amount of pool tokens redeemed.
 
 _Description:_
