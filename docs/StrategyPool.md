@@ -5,7 +5,7 @@ The MC²Fi `StrategyPool` contract holds multiple tokens according to a dynamic 
 ## Owner's Functions
 Owner's functions can only be called by the contract's owner, and are responsible for performing all of the Pool's entry functionalities and also to change the Pool's strategy (i.e. the Pool's distribution of underlying assets).
 
-#### `deposit(IERC20[] assets, uint256[] amounts, address receiver)`
+#### `deposit(IERC20[] assets, uint256[] amounts, uint256 poolTokens, address receiver)`
 
 Mints Pool tokens to receiver by depositing amounts of underlying tokens.
 
@@ -101,13 +101,14 @@ This function unlocks all functions that were locked with a `acquireAssetBeforeT
 Public functions can be called by off-chain services or directly by users to redeem pool tokens, or just to acquire information on the Pool's status.
 
 
-#### `redeem(uint256 poolTokens, address receiver, address owner)`
+#### `redeem(address owner, address receiver, uint256 poolTokens)`
 
 Burns exactly poolTokens from an owner account's balance.
 
 _Parameters:_
+- `owner`: Pool token owner account's address.
+- `receiver`: Address of the account that will receive the assets with a call to `withdraw` after backend processing.
 - `poolTokens`: Amount of pool tokens to be burned.
-- `owner`: Pool token owner owner account's address.
 
 _Reverts if:_
 - `poolTokens` is zero.
