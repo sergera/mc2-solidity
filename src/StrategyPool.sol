@@ -178,6 +178,7 @@ contract StrategyPool is
      */
     function redeem(
         address _owner,
+        address _receiver,
         uint256 _poolTokens
     ) external override whenNotPaused {
         require(_poolTokens > 0, "StrategyPool: redeem 0 pool tokens");
@@ -192,7 +193,7 @@ contract StrategyPool is
 
         _burn(_owner, _poolTokens);
         emit Redeem(_msgSender(), _owner, _poolTokens);
-        __herald.proclaimRedeem(_owner, _poolTokens);
+        __herald.proclaimRedeem(_owner, _receiver, _poolTokens);
     }
 
     /**

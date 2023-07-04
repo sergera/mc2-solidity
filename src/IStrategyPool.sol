@@ -120,7 +120,11 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * - MUST revert if all of poolTokens cannot be redeemed,
      *	 i.e. the owner not having enough poolTokens before the call.
      */
-    function redeem(address owner, uint256 poolTokens) external;
+    function redeem(
+        address owner,
+        address receiver,
+        uint256 poolTokens
+    ) external;
 
     /**
      * @dev Sends assets of underlying tokens to receiver.
