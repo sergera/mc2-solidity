@@ -15,11 +15,16 @@ interface IStrategyPoolHerald {
     event Redeem(
         address indexed strategyPool,
         address indexed owner,
+        address indexed receiver,
         uint256 amount
     );
 
     /**
      * @dev Emits a Redeem event.
      */
-    function proclaimRedeem(address owner, uint256 amount) external;
+    function proclaimRedeem(
+        address owner,
+        address receiver,
+        uint256 amount
+    ) external;
 }
