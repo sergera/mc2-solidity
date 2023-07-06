@@ -5,16 +5,16 @@ The MC²Fi `StrategyPoolHerald` contract aggregates important strategy pool even
 ## Deployment Addresses
 
 _Ethereum_:
-0x8C47839e82243cF5E2EE784B115F68e95f3C2ce1
+0x2096ccFc2EfE5dF7Cc838cF39aa5528891666e51
 
 _Goerli:_
-0x14837279c5FC572B0175e078732fb0694287bf53
+0x64c1241aE01b245FBA90BA88e15DF78Da2a6a2D9
 
 _BSC_:
-0x52f47C22F0138f8c6251b6A4dD6E93ee693116e1
+0x115932B4D979E3d7b2b18066Af444663E7F25478
 
 _BSC Testnet_:
-0x0893abEB433C1a3D63C60F7034c2582Fc7dc8c52
+0x85fC1F9EC12e16DA681EEd853464F9E162e3C036
 
 ### Public Functions
 All functions in this contract are public, considering that the validity of the events can always be checked since they include the caller address.
