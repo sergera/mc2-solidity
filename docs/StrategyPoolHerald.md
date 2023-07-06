@@ -19,7 +19,7 @@ _BSC Testnet_:
 ### Public Functions
 All functions in this contract are public, considering that the validity of the events can always be checked since they include the caller address.
 
-#### `proclaimRedeem(address owner, uint256 amount)`
+#### `proclaimRedeem(address owner, address receiver, uint256 amount)`
 
 Emits the "Redeem" event containing the caller address, and the parameterized owner address and amount.
 
