@@ -147,8 +147,8 @@ contract StrategyPool is
 
         for (uint256 i = 0; i < _assets.length; i++) {
             require(_amounts[i] > 0, "StrategyPool: deposit 0 amount");
-            if (!assetIsOwned(_assets[i])) {
-                addAsset(_assets[i]);
+            if (!_assetIsOwned(_assets[i])) {
+                _addAsset(_assets[i]);
             }
             SafeERC20.safeTransferFrom(
                 _assets[i],
@@ -208,7 +208,7 @@ contract StrategyPool is
             SafeERC20.safeTransfer(_assets[i], _receiver, _amounts[i]);
             assetBalances[_assets[i]] -= _amounts[i];
             if (assetBalances[_assets[i]] == 0) {
-                removeAsset(_assets[i]);
+                _removeAsset(_assets[i]);
             }
         }
 
@@ -224,7 +224,7 @@ contract StrategyPool is
     ) external override onlyOwner nonReentrant whenNotPaused {
         _pause();
         require(_amount > 0, "StrategyPool: acquire 0 amount");
-        require(assetIsOwned(_asset), "StrategyPool: acquire unowned asset");
+        require(_assetIsOwned(_asset), "StrategyPool: acquire unowned asset");
         require(
             assetBalances[_asset] >= _amount,
             "StrategyPool: acquire more than balance"
@@ -232,7 +232,7 @@ contract StrategyPool is
         SafeERC20.safeTransfer(_asset, owner(), _amount);
         assetBalances[_asset] -= _amount;
         if (assetBalances[_asset] == 0) {
-            removeAsset(_asset);
+            _removeAsset(_asset);
         }
 
         emit AcquireBeforeTrade(_msgSender(), _asset, _amount);
@@ -252,7 +252,7 @@ contract StrategyPool is
 
         for (uint256 i = 0; i < _assets.length; i++) {
             require(_amounts[i] > 0, "StrategyPool: give back 0 amount");
-            if (assetIsOwned(_assets[i])) {
+            if (_assetIsOwned(_assets[i])) {
                 /* asset is already owned, acquire it, and add to its balance */
                 SafeERC20.safeTransferFrom(
                     _assets[i],
@@ -269,7 +269,7 @@ contract StrategyPool is
                     address(this),
                     _amounts[i]
                 );
-                addAsset(_assets[i]);
+                _addAsset(_assets[i]);
                 assetBalances[_assets[i]] += _amounts[i];
             }
         }
@@ -282,23 +282,23 @@ contract StrategyPool is
      * @dev Adds a knowingly previously unowned asset.
      * NOTE: should NOT be called on an owned asset.
      */
-    function addAsset(IERC20 _asset) private {
+    function _addAsset(IERC20 _asset) private {
         assetAddresses.push(_asset);
-        setAssetIndex(_asset, assetAddresses.length - 1);
+        _setAssetIndex(_asset, assetAddresses.length - 1);
     }
 
     /**
      * @dev Removes a knowingly owned asset.
      * NOTE: should NOT be called on an unowned asset.
      */
-    function removeAsset(IERC20 _asset) private {
-        uint256 _index = getAssetIndex(_asset);
+    function _removeAsset(IERC20 _asset) private {
+        uint256 _index = _getAssetIndex(_asset);
         IERC20 _lastAsset = assetAddresses[assetAddresses.length - 1];
 
         assetAddresses[_index] = _lastAsset;
         assetAddresses.pop();
 
-        setAssetIndex(_lastAsset, _index);
+        _setAssetIndex(_lastAsset, _index);
 
         delete __assetIndices[_asset];
     }
@@ -306,21 +306,21 @@ contract StrategyPool is
     /**
      * @dev Gets the actual index of the asset in "assets" array.
      */
-    function getAssetIndex(IERC20 _asset) private view returns (uint256) {
+    function _getAssetIndex(IERC20 _asset) private view returns (uint256) {
         return __assetIndices[_asset] - 1;
     }
 
     /**
-     * @dev Inserts an actual index of the asset in "assets" array into "__assetIndices" mapping.
+     * @dev Inserts a shifted index of the asset in "assets" array into "__assetIndices" mapping.
      */
-    function setAssetIndex(IERC20 _asset, uint256 _index) private {
+    function _setAssetIndex(IERC20 _asset, uint256 _index) private {
         __assetIndices[_asset] = _index + 1;
     }
 
     /**
      * @dev Returns a bool indicating if the asset is currently owned by the strategy pool.
      */
-    function assetIsOwned(IERC20 _asset) private view returns (bool) {
+    function _assetIsOwned(IERC20 _asset) private view returns (bool) {
         return __assetIndices[_asset] != 0;
     }
 }
