@@ -34,6 +34,70 @@ Should be called by the owner in order to transfer assets owned by this contract
 
 ---
 
+#### `rejectDeposit(address proprietor, IERC20 asset, uint256 depositAmount, address feeRecipient, uint256 feeAmount)`
+
+Transfers an asset deposit amount back to proprietor and fee amount to fee recipient.
+
+_Parameters:_
+- `proprietor`: Address of the account that deposited the asset to be transferred.
+- `asset`: Address of ERC20 token to be transferred.
+- `depositAmount`: Amount of `asset` to be returned to `proprietor`.
+- `feeRecipient`: Address of the recipient of the asset fee.
+- `feeAmount`: Amount of `asset` to be transferred to `feeRecipient`.
+
+_Description:_
+Should be called by the owner in order to reject deposits either from non-whitelisted wallets, or which deposited non-allowed asset. This function also emits the `RejectDeposit` event, which can be listened to off-chain.
+
+---
+
+#### `addBlacklistedAccount(address blacklisted)`
+
+Adds an address as blacklisted, which means the address won't be able to interact with any public function.
+
+_Parameters:_
+- `blacklisted`: Address of the account to be blacklisted.
+
+_Description:_
+Should be called by the owner in order to restrict bad actors. This function also emits the `AddBlacklistedAccount` event, which can be listened to off-chain.
+
+---
+
+#### `removeBlacklistedAccount(address blacklisted)`
+
+Removes an address as blacklisted, which means the address won't be able to interact with any public function.
+
+_Parameters:_
+- `blacklisted`: Address of the account to be removed from the blacklist.
+
+_Description:_
+Should be called by the owner in order to unrestrict previously added bad actors in case of a mistake. This function also emits the `RemoveBlacklistedAccount` event, which can be listened to off-chain.
+
+---
+
+#### `accountIsBlacklisted(address blacklisted) returns (bool isBlacklisted)`
+
+Returns a boolean that signifies if the parameterized address is blacklisted.
+
+_Parameters:_
+- `blacklisted`: Address of the account.
+
+_Description:_
+Should be called by the owner in order to find if an address is currently blacklisted.
+
+---
+
+#### `blacklistedAccounts() returns (address[] blacklistedAccounts)`
+
+Returns a boolean that signifies if the parameterized address is blacklisted.
+
+_Parameters:_
+- `blacklisted`: Address of the account.
+
+_Description:_
+Should be called by the owner in order to find if an address is currently blacklisted.
+
+---
+
 ### Public Functions
 This contract's public functions include deposit and withdraw by users, and view functions to query user's balance of assets.
 
