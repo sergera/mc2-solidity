@@ -150,5 +150,5 @@ interface IEscrow {
      */
     function accountIsBlacklisted(
         address _blacklisted
-    ) external view returns (bool);
+    ) external view returns (bool isBlacklisted);
 }
