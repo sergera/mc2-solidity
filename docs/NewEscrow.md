@@ -19,18 +19,18 @@ _BSC Testnet_:
 ## Owner's Functions
 Owner's functions can only be called by the contract's owner, in this contract they are used to transfer assets deposited by users and to blacklist/unblacklist accounts.
 
-#### `transferAssetFrom(address proprietor, address recipient, IERC20 asset, uint256 amount)`
+#### `transferAssetsFrom(address[] proprietors, IERC20[] assets, uint256[] amounts, address recipient)`
 
-Transfers a given asset amount owned by this contract to another account, and internally reduces amount from the asset balance of the user that deposited it in the first place.
+Transfers asset amounts owned by this contract to another account, and internally reduces amount from the asset balances of the proprietors that deposited it in the first place.
 
 _Parameters:_
-- `proprietor`: Address of the account that deposited the asset to be transferred.
-- `recipient`: Address of the recipient of the asset transfer.
-- `asset`: Address of ERC20 token to be transferred.
-- `amount`: Amount to be transferred.
+- `proprietors`: Array of addresses pertaining to the accounts that deposited the assets to be transferred.
+- `assets`: Array of addresses of ERC20 tokens to be transferred.
+- `amounts`: Array of amounts to be transferred.
+- `recipient`: Address of the recipient of the asset transfers.
 
 _Description:_
-Should be called by the owner in order to transfer assets owned by this contract to another account. This function also emits the `TransferAssetFrom` event, which can be listened to off-chain.
+Should be called by the owner in order to transfer assets owned by this contract to another account. This function also emits the `TransferAssetsFrom` event, which can be listened to off-chain.
 
 ---
 
