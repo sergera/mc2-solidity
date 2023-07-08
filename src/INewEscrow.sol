@@ -36,6 +36,14 @@ interface IEscrow {
         uint256 amount
     );
 
+    event RejectDeposit(
+        address indexed proprietor,
+        IERC20 indexed asset,
+        uint256 indexed depositAmount,
+        address feeRecipient,
+        uint256 feeAmount
+    );
+
     event AddBlacklistedAccount(address indexed account);
 
     event RemoveBlacklistedAccount(address indexed account);
@@ -103,6 +111,22 @@ interface IEscrow {
         address recipient,
         IERC20 asset,
         uint256 amount
+    ) external;
+
+    /**
+     * @dev Transfers deposit amount back to proprietor, and fee amount to fee recipient.
+     *
+     * - MUST emit the RejectDeposit event.
+     * - MUST revert if deposit amount + fee amount is 0.
+     * - MUST revert if asset is not owned by proprietor.
+     * - MUST revert if deposit amount + fee amount is greater than the proprietor's asset balance.
+     */
+    function rejectDeposit(
+        address proprietor,
+        IERC20 asset,
+        uint256 depositAmount,
+        address feeRecipient,
+        uint256 feeAmount
     ) external;
 
     /**
