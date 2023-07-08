@@ -23,12 +23,12 @@ import {IEscrow} from "./INewEscrow.sol";
  * @dev MC²Fi Escrow contract
  */
 contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
-    address[] public blacklistedAddresses;
+    address[] private __blacklistedAddresses;
     mapping(address => uint256) private __blacklistedIndices;
 
-    mapping(address => IERC20[]) public assetAddressesByProprietor;
+    mapping(address => IERC20[]) private __assetAddressesByProprietor;
     mapping(address => mapping(IERC20 => uint256))
-        public assetBalancesByProprietor;
+        private __assetBalancesByProprietor;
     mapping(address => mapping(IERC20 => uint256))
         private __assetIndicesByProprietor;
 
@@ -49,7 +49,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             !_addressIsBlacklisted(_msgSender()),
             "Escrow: caller is blacklisted"
         );
-        return assetAddressesByProprietor[_proprietor];
+        return __assetAddressesByProprietor[_proprietor];
     }
 
     /**
@@ -63,7 +63,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             !_addressIsBlacklisted(_msgSender()),
             "Escrow: caller is blacklisted"
         );
-        return assetBalancesByProprietor[_proprietor][_asset];
+        return __assetBalancesByProprietor[_proprietor][_asset];
     }
 
     /**
@@ -76,16 +76,16 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             !_addressIsBlacklisted(_msgSender()),
             "Escrow: caller is blacklisted"
         );
-        uint256 _length = assetAddressesByProprietor[_proprietor].length;
+        uint256 _length = __assetAddressesByProprietor[_proprietor].length;
 
         uint256[] memory _amounts = new uint256[](_length);
         for (uint256 i = 0; i < _length; i++) {
-            _amounts[i] = assetBalancesByProprietor[_proprietor][
-                assetAddressesByProprietor[_proprietor][i]
+            _amounts[i] = __assetBalancesByProprietor[_proprietor][
+                __assetAddressesByProprietor[_proprietor][i]
             ];
         }
 
-        return (assetAddressesByProprietor[_proprietor], _amounts);
+        return (__assetAddressesByProprietor[_proprietor], _amounts);
     }
 
     /**
@@ -109,7 +109,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             address(this),
             _amount
         );
-        assetBalancesByProprietor[_msgSender()][_asset] += _amount;
+        __assetBalancesByProprietor[_msgSender()][_asset] += _amount;
 
         emit Deposit(_msgSender(), _asset, _amount);
     }
@@ -123,7 +123,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     ) external override nonReentrant {
         require(_amount > 0, "Escrow: withdraw 0 amount");
         require(
-            assetBalancesByProprietor[_msgSender()][_asset] >= _amount,
+            __assetBalancesByProprietor[_msgSender()][_asset] >= _amount,
             "Escrow: amount exceeds owned balance of caller"
         );
         require(
@@ -131,8 +131,8 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             "Escrow: caller is blacklisted"
         );
         SafeERC20.safeTransfer(_asset, _msgSender(), _amount);
-        assetBalancesByProprietor[_msgSender()][_asset] -= _amount;
-        if (assetBalancesByProprietor[_msgSender()][_asset] == 0) {
+        __assetBalancesByProprietor[_msgSender()][_asset] -= _amount;
+        if (__assetBalancesByProprietor[_msgSender()][_asset] == 0) {
             _removeAsset(_msgSender(), _asset);
         }
 
@@ -154,12 +154,12 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             "Escrow: transfer asset not owned by proprietor"
         );
         require(
-            assetBalancesByProprietor[_proprietor][_asset] >= _amount,
+            __assetBalancesByProprietor[_proprietor][_asset] >= _amount,
             "Escrow: transfer more than proprietor balance of asset"
         );
         SafeERC20.safeTransfer(_asset, _recipient, _amount);
-        assetBalancesByProprietor[_proprietor][_asset] -= _amount;
-        if (assetBalancesByProprietor[_proprietor][_asset] == 0) {
+        __assetBalancesByProprietor[_proprietor][_asset] -= _amount;
+        if (__assetBalancesByProprietor[_proprietor][_asset] == 0) {
             _removeAsset(_proprietor, _asset);
         }
 
@@ -182,7 +182,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
             "Escrow: reject asset not owned by proprietor"
         );
         require(
-            assetBalancesByProprietor[_proprietor][_asset] >=
+            __assetBalancesByProprietor[_proprietor][_asset] >=
                 _depositAmount + _feeAmount,
             "Escrow: reject more than proprietor balance of asset"
         );
@@ -192,10 +192,10 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
         if (_feeAmount > 0) {
             SafeERC20.safeTransfer(_asset, _feeRecipient, _feeAmount);
         }
-        assetBalancesByProprietor[_proprietor][_asset] -=
+        __assetBalancesByProprietor[_proprietor][_asset] -=
             _depositAmount +
             _feeAmount;
-        if (assetBalancesByProprietor[_proprietor][_asset] == 0) {
+        if (__assetBalancesByProprietor[_proprietor][_asset] == 0) {
             _removeAsset(_proprietor, _asset);
         }
 
@@ -260,11 +260,11 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
      * NOTE: should NOT be called on an owned asset by proprietor.
      */
     function _addAsset(address _proprietor, IERC20 _asset) private {
-        assetAddressesByProprietor[_proprietor].push(_asset);
+        __assetAddressesByProprietor[_proprietor].push(_asset);
         _setAssetIndex(
             _proprietor,
             _asset,
-            assetAddressesByProprietor[_proprietor].length - 1
+            __assetAddressesByProprietor[_proprietor].length - 1
         );
     }
 
@@ -274,12 +274,12 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
      */
     function _removeAsset(address _proprietor, IERC20 _asset) private {
         uint256 _index = _getAssetIndex(_proprietor, _asset);
-        IERC20 _lastAsset = assetAddressesByProprietor[_proprietor][
-            assetAddressesByProprietor[_proprietor].length - 1
+        IERC20 _lastAsset = __assetAddressesByProprietor[_proprietor][
+            __assetAddressesByProprietor[_proprietor].length - 1
         ];
 
-        assetAddressesByProprietor[_proprietor][_index] = _lastAsset;
-        assetAddressesByProprietor[_proprietor].pop();
+        __assetAddressesByProprietor[_proprietor][_index] = _lastAsset;
+        __assetAddressesByProprietor[_proprietor].pop();
 
         _setAssetIndex(_proprietor, _lastAsset, _index);
 
@@ -287,7 +287,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Inserts an shifted index of the asset in "assetAddressesByProprietor" array into "__assetIndicesByProprietor" mapping.
+     * @dev Inserts an shifted index of the asset in "__assetAddressesByProprietor" array into "__assetIndicesByProprietor" mapping.
      */
     function _setAssetIndex(
         address _proprietor,
@@ -298,7 +298,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Gets the actual index of the asset in "assetAddressesByProprietor" array.
+     * @dev Gets the actual index of the asset in "__assetAddressesByProprietor" array.
      */
     function _getAssetIndex(
         address _proprietor,
@@ -321,8 +321,8 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
      * NOTE: should NOT be called on a blacklisted address.
      */
     function _addBlacklisted(address _blacklisted) private {
-        blacklistedAddresses.push(_blacklisted);
-        _setBlacklistedIndex(_blacklisted, blacklistedAddresses.length - 1);
+        __blacklistedAddresses.push(_blacklisted);
+        _setBlacklistedIndex(_blacklisted, __blacklistedAddresses.length - 1);
     }
 
     /**
@@ -331,12 +331,12 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
      */
     function _removeBlacklisted(address _blacklisted) private {
         uint256 _index = _getBlacklistedIndex(_blacklisted);
-        address _lastBlacklisted = blacklistedAddresses[
-            blacklistedAddresses.length - 1
+        address _lastBlacklisted = __blacklistedAddresses[
+            __blacklistedAddresses.length - 1
         ];
 
-        blacklistedAddresses[_index] = _lastBlacklisted;
-        blacklistedAddresses.pop();
+        __blacklistedAddresses[_index] = _lastBlacklisted;
+        __blacklistedAddresses.pop();
 
         _setBlacklistedIndex(_lastBlacklisted, _index);
 
@@ -344,7 +344,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Inserts a shifted index of the blacklisted address in "blacklistedAddresses" array into "__blacklistedIndices" mapping.
+     * @dev Inserts a shifted index of the blacklisted address in "__blacklistedAddresses" array into "__blacklistedIndices" mapping.
      */
     function _setBlacklistedIndex(
         address _blacklisted,
@@ -354,7 +354,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Gets the actual index of the blacklisted address in "blacklistedAddresses" array.
+     * @dev Gets the actual index of the blacklisted address in "__blacklistedAddresses" array.
      */
     function _getBlacklistedIndex(
         address _blacklisted
