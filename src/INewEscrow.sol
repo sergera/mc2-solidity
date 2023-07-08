@@ -144,4 +144,11 @@ interface IEscrow {
      * - MUST revert if address is 0.
      */
     function removeBlacklistedAccount(address blacklisted) external;
+
+    /**
+     * @dev Returns a bool indicating if the address is currently blacklisted.
+     */
+    function accountIsBlacklisted(
+        address _blacklisted
+    ) external view returns (bool);
 }
