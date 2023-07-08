@@ -151,4 +151,12 @@ interface IEscrow {
     function accountIsBlacklisted(
         address _blacklisted
     ) external view returns (bool isBlacklisted);
+
+    /**
+     * @dev Returns the list of currently blacklisted addresses.
+     */
+    function blacklistedAccounts()
+        external
+        view
+        returns (address[] memory blacklistedAccounts);
 }

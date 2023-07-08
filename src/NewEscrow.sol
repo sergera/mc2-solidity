@@ -242,7 +242,20 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     function accountIsBlacklisted(
         address _blacklisted
     ) external view override onlyOwner returns (bool) {
-        _addressIsBlacklisted(_blacklisted);
+        return _addressIsBlacklisted(_blacklisted);
+    }
+
+    /**
+     * @dev Returns the list of currently blacklisted addresses.
+     */
+    function blacklistedAccounts()
+        external
+        view
+        override
+        onlyOwner
+        returns (address[] memory)
+    {
+        return __blacklistedAddresses;
     }
 
     /**
