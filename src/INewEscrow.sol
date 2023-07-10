@@ -17,10 +17,18 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
  * @dev Interface of the MC²Fi Escrow contract
  */
 interface IEscrow {
-    event Deposit(
+    event AcceptDeposit(
         address indexed proprietor,
         IERC20 indexed asset,
         uint256 indexed amount
+    );
+
+    event RejectDeposit(
+        address indexed proprietor,
+        IERC20 indexed asset,
+        uint256 indexed depositAmount,
+        address feeRecipient,
+        uint256 feeAmount
     );
 
     event Withdraw(
@@ -34,14 +42,6 @@ interface IEscrow {
         address[] proprietors,
         IERC20[] assets,
         uint256[] amounts
-    );
-
-    event RejectDeposit(
-        address indexed proprietor,
-        IERC20 indexed asset,
-        uint256 indexed depositAmount,
-        address feeRecipient,
-        uint256 feeAmount
     );
 
     event AddBlacklistedAccount(address indexed account);
@@ -79,14 +79,30 @@ interface IEscrow {
     ) external view returns (IERC20[] memory assets, uint256[] memory balances);
 
     /**
-     * @dev Transfers pre-approved asset amount to this contract and registers it to caller.
+     * @dev Registers transfer of asset and amount made to this contract to proprietor.
      *
-     * - MUST emit the Deposit event.
+     * - MUST emit the AcceptDeposit event.
      * - MUST revert if amount is 0.
-     * - MUST revert if the asset cannot be deposited,
-     *	 i.e. caller not approving enough assets before the call.
      */
-    function deposit(IERC20 asset, uint256 amount) external;
+    function acceptDeposit(
+        address proprietor,
+        IERC20 asset,
+        uint256 amount
+    ) external;
+
+    /**
+     * @dev Transfers transferred asset amount back to proprietor, and fee amount to fee recipient.
+     *
+     * - MUST emit the RejectDeposit event.
+     * - MUST revert if deposit amount + fee amount is 0.
+     */
+    function rejectDeposit(
+        address proprietor,
+        IERC20 asset,
+        uint256 depositAmount,
+        address feeRecipient,
+        uint256 feeAmount
+    ) external;
 
     /**
      * @dev Allows previously deposited assets to be withdrawn by the caller.
@@ -112,22 +128,6 @@ interface IEscrow {
         IERC20[] memory assets,
         uint256[] memory amounts,
         address recipient
-    ) external;
-
-    /**
-     * @dev Transfers deposit amount back to proprietor, and fee amount to fee recipient.
-     *
-     * - MUST emit the RejectDeposit event.
-     * - MUST revert if deposit amount + fee amount is 0.
-     * - MUST revert if asset is not owned by proprietor.
-     * - MUST revert if deposit amount + fee amount is greater than the proprietor's asset balance.
-     */
-    function rejectDeposit(
-        address proprietor,
-        IERC20 asset,
-        uint256 depositAmount,
-        address feeRecipient,
-        uint256 feeAmount
     ) external;
 
     /**

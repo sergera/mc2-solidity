@@ -89,29 +89,47 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Transfers pre-approved asset amount to this contract and registers it to caller.
+     * @dev Registers transfer of asset and amount made to this contract to proprietor.
      */
-    function deposit(
+    function acceptDeposit(
+        address _proprietor,
         IERC20 _asset,
         uint256 _amount
-    ) external override nonReentrant whenNotPaused {
-        require(_amount > 0, "Escrow: deposit 0 amount");
-        require(
-            !_addressIsBlacklisted(_msgSender()),
-            "Escrow: caller is blacklisted"
-        );
-        if (!_assetIsOwned(_msgSender(), _asset)) {
-            _addAsset(_msgSender(), _asset);
+    ) external override onlyOwner nonReentrant {
+        require(_amount > 0, "Escrow: accept 0 deposit amount");
+        if (!_assetIsOwned(_proprietor, _asset)) {
+            _addAsset(_proprietor, _asset);
         }
-        SafeERC20.safeTransferFrom(
-            _asset,
-            _msgSender(),
-            address(this),
-            _amount
-        );
-        __assetBalancesByProprietor[_msgSender()][_asset] += _amount;
+        __assetBalancesByProprietor[_proprietor][_asset] += _amount;
 
-        emit Deposit(_msgSender(), _asset, _amount);
+        emit AcceptDeposit(_proprietor, _asset, _amount);
+    }
+
+    /**
+     * @dev Owner of the contract gives back transferred asset amount to proprietor and fee amount to fee recipient.
+     */
+    function rejectDeposit(
+        address _proprietor,
+        IERC20 _asset,
+        uint256 _depositAmount,
+        address _feeRecipient,
+        uint256 _feeAmount
+    ) external override onlyOwner nonReentrant {
+        require(_depositAmount + _feeAmount > 0, "Escrow: reject 0 amount");
+        if (_depositAmount > 0) {
+            SafeERC20.safeTransfer(_asset, _proprietor, _depositAmount);
+        }
+        if (_feeAmount > 0) {
+            SafeERC20.safeTransfer(_asset, _feeRecipient, _feeAmount);
+        }
+
+        emit RejectDeposit(
+            _proprietor,
+            _asset,
+            _depositAmount,
+            _feeRecipient,
+            _feeAmount
+        );
     }
 
     /**
@@ -178,48 +196,6 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
         }
 
         emit TransferAssetsFrom(_recipient, _proprietors, _assets, _amounts);
-    }
-
-    /**
-     * @dev Owner of the contract gives back deposit amount to proprietor and fee amount to fee recipient.
-     */
-    function rejectDeposit(
-        address _proprietor,
-        IERC20 _asset,
-        uint256 _depositAmount,
-        address _feeRecipient,
-        uint256 _feeAmount
-    ) external override onlyOwner nonReentrant {
-        require(_depositAmount + _feeAmount > 0, "Escrow: reject 0 amount");
-        require(
-            _assetIsOwned(_proprietor, _asset),
-            "Escrow: reject asset not owned by proprietor"
-        );
-        require(
-            __assetBalancesByProprietor[_proprietor][_asset] >=
-                _depositAmount + _feeAmount,
-            "Escrow: reject more than proprietor balance of asset"
-        );
-        if (_depositAmount > 0) {
-            SafeERC20.safeTransfer(_asset, _proprietor, _depositAmount);
-        }
-        if (_feeAmount > 0) {
-            SafeERC20.safeTransfer(_asset, _feeRecipient, _feeAmount);
-        }
-        __assetBalancesByProprietor[_proprietor][_asset] -=
-            _depositAmount +
-            _feeAmount;
-        if (__assetBalancesByProprietor[_proprietor][_asset] == 0) {
-            _removeAsset(_proprietor, _asset);
-        }
-
-        emit RejectDeposit(
-            _proprietor,
-            _asset,
-            _depositAmount,
-            _feeRecipient,
-            _feeAmount
-        );
     }
 
     /**
