@@ -13,7 +13,6 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Pausable} from "openzeppelin-contracts/contracts/security/Pausable.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 
@@ -22,7 +21,7 @@ import {IEscrow} from "./INewEscrow.sol";
 /**
  * @dev MC²Fi Escrow contract
  */
-contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
+contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     address[] private __blacklistedAddresses;
     mapping(address => uint256) private __blacklistedIndices;
 
