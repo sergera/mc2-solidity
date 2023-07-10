@@ -95,7 +95,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
         address _proprietor,
         IERC20 _asset,
         uint256 _amount
-    ) external override onlyOwner nonReentrant {
+    ) external override onlyOwner {
         require(_amount > 0, "Escrow: accept 0 deposit amount");
         if (!_assetIsOwned(_proprietor, _asset)) {
             _addAsset(_proprietor, _asset);
