@@ -37,10 +37,10 @@ interface IEscrow {
         uint256 indexed amount
     );
 
-    event TransferAssetsFrom(
+    event TransferAssetFrom(
         address indexed recipient,
+        IERC20 asset,
         address[] proprietors,
-        IERC20[] assets,
         uint256[] amounts
     );
 
@@ -115,19 +115,19 @@ interface IEscrow {
     function withdraw(IERC20 asset, uint256 amount) external;
 
     /**
-     * @dev Transfers assets deposited by proprietors to another address.
+     * @dev Transfers asset deposited by proprietors to another address.
      *
-     * - MUST emit the TransferAssetsFrom event.
+     * - MUST emit the TransferAssetFrom event.
      * - MUST revert if arrays are of different lengths.
      * - MUST revert if any amount is 0.
-     * - MUST revert if any asset is not owned by proprietor.
+     * - MUST revert if asset is not owned by any proprietor.
      * - MUST revert if any amount is greater than the proprietor's asset balance.
      */
-    function transferAssetsFrom(
+    function transferAssetFrom(
+        address recipient,
+        IERC20 asset,
         address[] memory proprietors,
-        IERC20[] memory assets,
-        uint256[] memory amounts,
-        address recipient
+        uint256[] memory amounts
     ) external;
 
     /**
