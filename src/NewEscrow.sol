@@ -89,7 +89,7 @@ contract Escrow is Ownable, Pausable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Registers transfer of asset and amount made to this contract to proprietor.
+     * @dev Registers transfer of asset and amount made to this contract by proprietor.
      */
     function acceptDeposit(
         address _proprietor,

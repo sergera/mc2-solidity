@@ -79,7 +79,7 @@ interface IEscrow {
     ) external view returns (IERC20[] memory assets, uint256[] memory balances);
 
     /**
-     * @dev Registers transfer of asset and amount made to this contract to proprietor.
+     * @dev Registers transfer of asset and amount made to this contract by proprietor.
      *
      * - MUST emit the AcceptDeposit event.
      * - MUST revert if amount is 0.
