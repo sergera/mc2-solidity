@@ -144,7 +144,7 @@ contract EscrowTestBasic is Test {
         assertEq(escrow.assets(address(this)).length, 0);
     }
 
-    function test_TransferAssetsFrom() public {
+    function test_TransferAssetFrom() public {
         IERC20[] memory initialAssets = escrow.assets(address(alice));
         assertEq(initialAssets.length, 0);
 
@@ -171,11 +171,11 @@ contract EscrowTestBasic is Test {
         address[] memory proprietors = new address[](1);
         proprietors[0] = address(alice);
 
-        escrow.transferAssetsFrom(
+        escrow.transferAssetFrom(
+            address(bob),
+            newAssets[0],
             proprietors,
-            newAssets,
-            newAmounts,
-            address(bob)
+            newAmounts
         );
 
         assertEq(escrow.assetBalance(address(alice), mockToken), 0);
