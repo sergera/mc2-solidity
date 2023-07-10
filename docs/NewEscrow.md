@@ -34,19 +34,33 @@ Should be called by the owner in order to transfer assets owned by this contract
 
 ---
 
-#### `rejectDeposit(address proprietor, IERC20 asset, uint256 depositAmount, address feeRecipient, uint256 feeAmount)`
+#### `acceptDeposit(address proprietor, IERC20 asset, uint256 amount)`
 
-Transfers an asset deposit amount back to proprietor and fee amount to fee recipient.
+Registers transfer of asset and amount made to this contract by proprietor, and internally increases amount of the asset balance of the caller.
 
 _Parameters:_
-- `proprietor`: Address of the account that deposited the asset to be transferred.
-- `asset`: Address of ERC20 token to be transferred.
+- `proprietor`: Address of account that transferred asset to this contract.
+- `asset`: Address of ERC20 token that was transferred.
+- `amount`: Amount that was transferred.
+
+_Description:_
+Should be called by the owner in order to register previously transferred asset amounts to this contract. This function also emits the `Deposit` event, which can be listened to off-chain.
+
+---
+
+#### `rejectDeposit(address proprietor, IERC20 asset, uint256 depositAmount, address feeRecipient, uint256 feeAmount)`
+
+Transfers an asset amount transferred to this contract back to proprietor and fee amount to fee recipient.
+
+_Parameters:_
+- `proprietor`: Address of the account that transferred the asset.
+- `asset`: Address of ERC20 token that was transferred.
 - `depositAmount`: Amount of `asset` to be returned to `proprietor`.
 - `feeRecipient`: Address of the recipient of the asset fee.
 - `feeAmount`: Amount of `asset` to be transferred to `feeRecipient`.
 
 _Description:_
-Should be called by the owner in order to reject deposits either from non-whitelisted wallets, or which deposited non-allowed asset. This function also emits the `RejectDeposit` event, which can be listened to off-chain.
+Should be called by the owner in order to reject transfers to this contract either from non-whitelisted wallets, or which deposited non-allowed asset. This function also emits the `RejectDeposit` event, which can be listened to off-chain.
 
 ---
 
@@ -100,19 +114,6 @@ Should be called by the owner in order to find if an address is currently blackl
 
 ### Public Functions
 This contract's public functions include deposit and withdraw by users, and view functions to query user's balance of assets.
-
-#### `deposit(IERC20 asset, uint256 amount)`
-
-Transfers a pre-approved amount of an asset from the caller to this contract, and internally increases amount of the asset balance of the caller.
-
-_Parameters:_
-- `asset`: Address of ERC20 token to be deposited.
-- `amount`: Amount to be deposited.
-
-_Description:_
-Should be called by a user in order to transfer pre-approved asset amounts to this contract. This function also emits the `Deposit` event, which can be listened to off-chain.
-
----
 
 #### `withdraw(IERC20 asset, uint256 amount)`
 
