@@ -6,7 +6,7 @@ import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {console} from "forge-std/console.sol";
 
-import {Escrow} from "../src/NewEscrow.sol";
+import {Escrow} from "../src/Escrow.sol";
 import {MockToken} from "./MockToken.sol";
 import {Utils} from "./Utils.sol";
 
