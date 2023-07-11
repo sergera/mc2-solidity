@@ -1,6 +1,6 @@
 # Escrow Contract Documentation
 
-The MC²Fi `Escrow` contract register user asset deposits, allows users to withdraw previously accepted deposits of assets, and transfers user's deposits to the appropriate accounts.
+The MC²Fi `Escrow` contract registers user asset transfers as deposits, refunds registered deposits, allows users to directly withdraw previously registered deposits of assets, and transfers users' accepted deposits to the appropriate accounts.
 
 ## Deployment Addresses
 
@@ -17,17 +17,18 @@ _BSC Testnet_:
 
 
 ## Owner's Functions
-Owner's functions can only be called by the contract's owner, in this contract they are used to transfer assets deposited by users and to blacklist/unblacklist accounts.
+Owner's functions can only be called by the contract's owner, in this contract they are used to register asset transfers as deposits, reject asset transfers, refund accepted deposits, transfer assets from accepted deposits, and to blacklist/unblacklist accounts.
 
-#### `transferAssetFrom(address recipient, IERC20 asset, address[] proprietors, uint256[] amounts)`
+#### `transferAssetFrom(address proprietor, IERC20 asset, uint256 amount, address recipient)`
 
-Transfers asset amounts owned by this contract to another account, and internally reduces amount from the asset balances of the proprietors that deposited it in the first place.
+Transfers asset amount owned by this contract to another account, and internally reduces amount from the asset balance of the proprietor that deposited it in the first place.
 
 _Parameters:_
-- `recipient`: Address of the recipient of the asset transfers.
+- `proprietor`: Addresses pertaining to the account that deposited the asset to be transferred.
+- `amount`: Amount to be transferred from proprietor's registered deposit.
 - `asset`: Address ERC20 token to be transferred.
-- `proprietors`: Array of addresses pertaining to the accounts that deposited the asset to be transferred.
-- `amounts`: Array of amounts to be transferred from each proprietor.
+- `recipient`: Address of the recipient of the asset transfer.
+
 
 _Description:_
 Should be called by the owner in order to transfer an asset owned by this contract to another account. This function also emits the `TransferAssetFrom` event, which can be listened to off-chain.
@@ -44,7 +45,7 @@ _Parameters:_
 - `amount`: Amount that was transferred.
 
 _Description:_
-Should be called by the owner in order to register previously transferred asset amounts to this contract. This function also emits the `Deposit` event, which can be listened to off-chain.
+Should be called by the owner in order to register previously transferred asset amounts to this contract. This function also emits the `AcceptDeposit` event, which can be listened to off-chain.
 
 ---
 
@@ -64,17 +65,17 @@ Should be called by the owner in order to reject transfers to this contract eith
 
 ---
 
-#### `refundAssets(address[] proprietors, IERC20[] assets, uint256[] amounts)`
+#### `refundAsset(address proprietor, IERC20 asset, uint256 amount)`
 
-Transfers amounts of previously accepted asset deposits back to proprietors, and internally reduces amount from the asset balances of the proprietors.
+Transfers amount of previously accepted asset deposit back to proprietor, and internally reduces amount from the asset balance of the proprietor.
 
 _Parameters:_
-- `proprietors`: Array of addresses pertaining to the accounts that deposited the asset to be refunded.
-- `assets`: Array of addresses of ERC20 tokens to be transferred.
-- `amounts`: Array of amounts to be transferred back to each proprietor.
+- `proprietor`: Address pertaining to the account that deposited the asset to be refunded.
+- `asset`: Address of ERC20 token to be transferred.
+- `amount`: Amount to be transferred back to proprietor.
 
 _Description:_
-Should be called by the owner in order to refund amounts of previously accepted deposits. This function also emits the `RefundAssets` event, which can be listened to off-chain.
+Should be called by the owner in order to refund amount of a previously accepted deposit. This function also emits the `RefundAsset` event, which can be listened to off-chain.
 
 ---
 
