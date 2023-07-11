@@ -138,14 +138,14 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
         IERC20 _asset,
         uint256 _amount
     ) external override nonReentrant {
+        require(
+            !_addressIsBlacklisted(_msgSender()),
+            "Escrow: caller is blacklisted"
+        );
         require(_amount > 0, "Escrow: withdraw 0 amount");
         require(
             __assetBalancesByProprietor[_msgSender()][_asset] >= _amount,
             "Escrow: amount exceeds owned balance of caller"
-        );
-        require(
-            !_addressIsBlacklisted(_msgSender()),
-            "Escrow: caller is blacklisted"
         );
         SafeERC20.safeTransfer(_asset, _msgSender(), _amount);
         __assetBalancesByProprietor[_msgSender()][_asset] -= _amount;
