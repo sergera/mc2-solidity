@@ -219,6 +219,65 @@ contract EscrowTestBasic is Test {
         assertEq(afterBalances.length, 0);
         assertEq(escrow.assetBalance(address(alice), mockToken), 0);
     }
+
+    function test_RefundAssets() public {
+        IERC20[] memory initialAssets = escrow.assets(address(alice));
+        assertEq(initialAssets.length, 0);
+
+        mockToken.mint(address(alice), 100);
+        vm.prank(alice);
+        mockToken.transfer(address(escrow), 100);
+
+        assertEq(mockToken.balanceOf(address(alice)), 0);
+        assertEq(mockToken.balanceOf(address(escrow)), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newAmounts = new uint256[](1);
+        newAmounts[0] = 100;
+
+        escrow.acceptDeposit(address(alice), newAssets[0], newAmounts[0]);
+
+        assertEq(mockToken.balanceOf(address(escrow)), 100);
+        assertEq(escrow.assetBalance(address(alice), mockToken), 100);
+        assertEq(escrow.assets(address(alice)).length, 1);
+        assertEq(mockToken.balanceOf(address(alice)), 0);
+
+        address[] memory proprietors = new address[](1);
+        proprietors[0] = address(alice);
+
+        escrow.refundAssets(proprietors, newAssets, newAmounts);
+
+        assertEq(escrow.assetBalance(address(alice), mockToken), 0);
+        assertEq(mockToken.balanceOf(address(escrow)), 0);
+        assertEq(mockToken.balanceOf(address(alice)), 100);
+    }
+
+    function test_RescueAssets() public {
+        IERC20[] memory initialAssets = escrow.assets(address(alice));
+        assertEq(initialAssets.length, 0);
+
+        mockToken.mint(address(alice), 100);
+        vm.prank(alice);
+        mockToken.transfer(address(escrow), 100);
+
+        assertEq(mockToken.balanceOf(address(alice)), 0);
+        assertEq(mockToken.balanceOf(address(escrow)), 100);
+        assertEq(mockToken.balanceOf(address(this)), 0);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newAmounts = new uint256[](1);
+        newAmounts[0] = 100;
+
+        escrow.rescueAssets(address(this), newAssets, newAmounts);
+
+        assertEq(escrow.assetBalance(address(alice), mockToken), 0);
+        assertEq(mockToken.balanceOf(address(escrow)), 0);
+        assertEq(mockToken.balanceOf(address(this)), 100);
+    }
 }
 
 contract EscrowTestAcceptDeposit is Test {
