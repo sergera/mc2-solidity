@@ -64,6 +64,34 @@ Should be called by the owner in order to reject transfers to this contract eith
 
 ---
 
+#### `refundAssets(address[] proprietors, IERC20[] assets, uint256[] amounts)`
+
+Transfers amounts of previously accepted asset deposits back to proprietors, and internally reduces amount from the asset balances of the proprietors.
+
+_Parameters:_
+- `proprietors`: Array of addresses pertaining to the accounts that deposited the asset to be refunded.
+- `assets`: Array of addresses of ERC20 tokens to be transferred.
+- `amounts`: Array of amounts to be transferred back to each proprietor.
+
+_Description:_
+Should be called by the owner in order to refund amounts of previously accepted deposits. This function also emits the `RefundAssets` event, which can be listened to off-chain.
+
+---
+
+#### `rescueAssets(address recipient, IERC20[] assets, uint256[] amounts)`
+
+Transfers asset amounts owned by this contract to another account.
+
+_Parameters:_
+- `recipient`: Address of the recipient of the asset transfers.
+- `assets`: Array of addresses ERC20 tokens to be transferred.
+- `amounts`: Array of amounts to be transferred.
+
+_Description:_
+Should be called by the owner in order to transfer unregistered assets owned by this contract to another account. This function also emits the `RescueAssets` event, which can be listened to off-chain.
+
+---
+
 #### `addBlacklistedAccount(address blacklisted)`
 
 Adds an address as blacklisted, which means the address won't be able to interact with any public function.
