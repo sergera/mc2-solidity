@@ -28,7 +28,7 @@ import {IStrategyPool} from "./IStrategyPool.sol";
  * - inspired by OpenZeppelin's ERC4626 "Tokenized Pool Standard" implementation v4.8.0
  * - EIP OpenZeppelin's implementation is based on: https://eips.ethereum.org/EIPS/eip-4626[ERC-4626]
  * - allows for multiple underlying tokens
- * - keeps track of currently owned tokens, no possible donation attacks
+ * - keeps track of currently owned tokens
  * - represents a dynamic token strategy, owner can change the underlying tokens and their ratios
  */
 contract StrategyPool is
