@@ -198,6 +198,67 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
+     * @dev Refunds previously accepted deposits to proprietors.
+     */
+    function refundAssets(
+        address[] memory _proprietors,
+        IERC20[] memory _assets,
+        uint256[] memory _amounts
+    ) external override onlyOwner nonReentrant {
+        require(
+            _proprietors.length == _assets.length &&
+                _proprietors.length == _amounts.length,
+            "Escrow: array lengths do not match"
+        );
+
+        for (uint256 i = 0; i < _proprietors.length; i++) {
+            require(
+                _amounts[i] > 0,
+                "Escrow: refund 0 amount of proprietor asset"
+            );
+            require(
+                _assetIsOwned(_proprietors[i], _assets[i]),
+                "Escrow: refund asset not owned by proprietor"
+            );
+            require(
+                __assetBalancesByProprietor[_proprietors[i]][_assets[i]] >=
+                    _amounts[i],
+                "Escrow: refund more than proprietor balance of asset"
+            );
+            SafeERC20.safeTransfer(_assets[i], _proprietors[i], _amounts[i]);
+            __assetBalancesByProprietor[_proprietors[i]][
+                _assets[i]
+            ] -= _amounts[i];
+            if (__assetBalancesByProprietor[_proprietors[i]][_assets[i]] == 0) {
+                _removeAsset(_proprietors[i], _assets[i]);
+            }
+        }
+
+        emit RefundAssets(_proprietors, _assets, _amounts);
+    }
+
+    /**
+     * @dev Allows owner to rescue any unregistered assets owned by this contract.
+     */
+    function rescueAssets(
+        address _recipient,
+        IERC20[] memory _assets,
+        uint256[] memory _amounts
+    ) external override onlyOwner nonReentrant {
+        require(
+            _assets.length == _amounts.length,
+            "Escrow: array lengths do not match"
+        );
+
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(_amounts[i] > 0, "Escrow: rescue 0 amount");
+            SafeERC20.safeTransfer(_assets[i], _recipient, _amounts[i]);
+        }
+
+        emit RescueAssets(_recipient, _assets, _amounts);
+    }
+
+    /**
      * @dev Adds address to blacklisted addresses.
      */
     function addBlacklistedAccount(

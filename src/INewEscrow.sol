@@ -44,6 +44,18 @@ interface IEscrow {
         uint256[] amounts
     );
 
+    event RefundAssets(
+        address[] proprietors,
+        IERC20[] assets,
+        uint256[] amounts
+    );
+
+    event RescueAssets(
+        address indexed recipient,
+        IERC20[] assets,
+        uint256[] amounts
+    );
+
     event AddBlacklistedAccount(address indexed account);
 
     event RemoveBlacklistedAccount(address indexed account);
@@ -128,6 +140,36 @@ interface IEscrow {
         IERC20 asset,
         address[] memory proprietors,
         uint256[] memory amounts
+    ) external;
+
+    /**
+     * @dev Refunds previously accepted deposits to proprietors.
+     *
+     * - MUST emit the RefundAssets event.
+     * - MUST revert if arrays are of different lengths.
+     * - MUST revert if any amount is 0.
+     * - MUST revert if asset is not owned by any proprietor.
+     * - MUST revert if any amount is greater than the proprietor's asset balance.
+     */
+    function refundAssets(
+        address[] memory _proprietors,
+        IERC20[] memory _assets,
+        uint256[] memory _amounts
+    ) external;
+
+    /**
+     * @dev Allows to rescue any unregistered assets owned by this contract.
+     *
+     * - MUST emit the RescueAssets event.
+     * - MUST revert if arrays are of different lengths.
+     * - MUST revert if any amount is 0.
+     * - MUST revert if the asset cannot be transferred,
+     *	 i.e. the contract not having enough assets before the call.
+     */
+    function rescueAssets(
+        address _recipient,
+        IERC20[] memory _assets,
+        uint256[] memory _amounts
     ) external;
 
     /**
