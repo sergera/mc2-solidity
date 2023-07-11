@@ -154,9 +154,9 @@ interface IEscrow {
      * - MUST revert if any amount is greater than the proprietor's asset balance.
      */
     function refundAssets(
-        address[] memory _proprietors,
-        IERC20[] memory _assets,
-        uint256[] memory _amounts
+        address[] memory proprietors,
+        IERC20[] memory assets,
+        uint256[] memory amounts
     ) external;
 
     /**
@@ -169,9 +169,9 @@ interface IEscrow {
      *	 i.e. the contract not having enough assets before the call.
      */
     function rescueAssets(
-        address _recipient,
-        IERC20[] memory _assets,
-        uint256[] memory _amounts
+        address recipient,
+        IERC20[] memory assets,
+        uint256[] memory amounts
     ) external;
 
     /**
