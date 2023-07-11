@@ -88,7 +88,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Registers transfer of asset and amount made to this contract by proprietor.
+     * @dev Owner registers transfer of asset and amount made to this contract by proprietor.
      */
     function acceptDeposit(
         address _proprietor,
@@ -105,7 +105,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Owner of the contract gives back transferred asset amount to proprietor and fee amount to fee recipient.
+     * @dev Owner gives back transferred asset amount to proprietor and fee amount to fee recipient.
      */
     function rejectDeposit(
         address _proprietor,
@@ -132,7 +132,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Allows previously deposited assets to be withdrawn by the caller.
+     * @dev Caller withdraws previously accepted deposit of asset.
      */
     function withdraw(
         IERC20 _asset,
@@ -157,7 +157,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Owner of the contract transfers asset from proprietors to another address.
+     * @dev Owner transfers asset from proprietors to another address.
      */
     function transferAssetFrom(
         address _recipient,
@@ -198,7 +198,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Refunds previously accepted deposits to proprietors.
+     * @dev Owner refunds previously accepted deposits to proprietors.
      */
     function refundAssets(
         address[] memory _proprietors,
@@ -238,7 +238,7 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Allows owner to rescue any unregistered assets owned by this contract.
+     * @dev Owner rescues any unregistered assets owned by this contract.
      */
     function rescueAssets(
         address _recipient,

@@ -91,7 +91,7 @@ interface IEscrow {
     ) external view returns (IERC20[] memory assets, uint256[] memory balances);
 
     /**
-     * @dev Registers transfer of asset and amount made to this contract by proprietor.
+     * @dev Register transfer of asset and amount made to this contract by proprietor.
      *
      * - MUST emit the AcceptDeposit event.
      * - MUST revert if amount is 0.
@@ -103,10 +103,12 @@ interface IEscrow {
     ) external;
 
     /**
-     * @dev Transfers transferred asset amount back to proprietor, and fee amount to fee recipient.
+     * @dev Transfer unregistered deposit amount of asset to proprietor, and fee amount to fee recipient.
      *
      * - MUST emit the RejectDeposit event.
      * - MUST revert if deposit amount + fee amount is 0.
+     * - MUST revert if the asset cannot be transferred,
+     *	 i.e. the contract not having enough assets before the call.
      */
     function rejectDeposit(
         address proprietor,
@@ -117,7 +119,7 @@ interface IEscrow {
     ) external;
 
     /**
-     * @dev Allows previously deposited assets to be withdrawn by the caller.
+     * @dev Withdraw of previously accepted asset deposit by the caller.
      *
      * - MUST emit the Withdraw event.
      * - MUST revert if amount is 0.
@@ -127,7 +129,7 @@ interface IEscrow {
     function withdraw(IERC20 asset, uint256 amount) external;
 
     /**
-     * @dev Transfers asset deposited by proprietors to another address.
+     * @dev Transfer of asset deposited by proprietors to another address.
      *
      * - MUST emit the TransferAssetFrom event.
      * - MUST revert if arrays are of different lengths.
@@ -143,7 +145,7 @@ interface IEscrow {
     ) external;
 
     /**
-     * @dev Refunds previously accepted deposits to proprietors.
+     * @dev Partial or total refund of previously accepted deposits to proprietors.
      *
      * - MUST emit the RefundAssets event.
      * - MUST revert if arrays are of different lengths.
@@ -158,7 +160,7 @@ interface IEscrow {
     ) external;
 
     /**
-     * @dev Allows to rescue any unregistered assets owned by this contract.
+     * @dev Rescue of any unregistered assets owned by this contract.
      *
      * - MUST emit the RescueAssets event.
      * - MUST revert if arrays are of different lengths.
