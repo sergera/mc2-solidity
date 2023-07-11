@@ -14,7 +14,6 @@ pragma solidity ^0.8.0;
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {Pausable} from "openzeppelin-contracts/contracts/security/Pausable.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
@@ -38,8 +37,6 @@ contract StrategyPool is
     ReentrancyGuard,
     IStrategyPool
 {
-    using Math for uint256;
-
     IERC20[] public assetAddresses;
     mapping(IERC20 => uint256) private __assetIndices;
     mapping(IERC20 => uint256) public assetBalances;
