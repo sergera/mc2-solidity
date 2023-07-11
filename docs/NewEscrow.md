@@ -1,6 +1,6 @@
 # Escrow Contract Documentation
 
-The MC²Fi `Escrow` contract allows users to deposit assets and withdraw assets, and transfers users escrows to the appropriate accounts.
+The MC²Fi `Escrow` contract register user asset deposits, allows users to withdraw previously accepted deposits of assets, and transfers user's deposits to the appropriate accounts.
 
 ## Deployment Addresses
 
