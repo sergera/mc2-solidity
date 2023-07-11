@@ -172,10 +172,10 @@ contract EscrowTestBasic is Test {
         proprietors[0] = address(alice);
 
         escrow.transferAssetFrom(
-            address(bob),
+            address(alice),
             newAssets[0],
-            proprietors,
-            newAmounts
+            newAmounts[0],
+            address(bob)
         );
 
         assertEq(escrow.assetBalance(address(alice), mockToken), 0);
@@ -244,10 +244,7 @@ contract EscrowTestBasic is Test {
         assertEq(escrow.assets(address(alice)).length, 1);
         assertEq(mockToken.balanceOf(address(alice)), 0);
 
-        address[] memory proprietors = new address[](1);
-        proprietors[0] = address(alice);
-
-        escrow.refundAssets(proprietors, newAssets, newAmounts);
+        escrow.refundAsset(address(alice), newAssets[0], newAmounts[0]);
 
         assertEq(escrow.assetBalance(address(alice), mockToken), 0);
         assertEq(mockToken.balanceOf(address(escrow)), 0);
