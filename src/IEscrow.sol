@@ -38,16 +38,16 @@ interface IEscrow {
     );
 
     event TransferAssetFrom(
-        address indexed recipient,
-        IERC20 asset,
-        address[] proprietors,
-        uint256[] amounts
+        address indexed proprietor,
+        IERC20 indexed asset,
+        uint256 indexed amount,
+        address recipient
     );
 
-    event RefundAssets(
-        address[] proprietors,
-        IERC20[] assets,
-        uint256[] amounts
+    event RefundAsset(
+        address indexed proprietor,
+        IERC20 indexed asset,
+        uint256 indexed amount
     );
 
     event RescueAssets(
@@ -129,34 +129,32 @@ interface IEscrow {
     function withdraw(IERC20 asset, uint256 amount) external;
 
     /**
-     * @dev Transfer of asset deposited by proprietors to another address.
+     * @dev Transfer of asset deposited by proprietor to another address.
      *
      * - MUST emit the TransferAssetFrom event.
-     * - MUST revert if arrays are of different lengths.
-     * - MUST revert if any amount is 0.
-     * - MUST revert if asset is not owned by any proprietor.
-     * - MUST revert if any amount is greater than the proprietor's asset balance.
+     * - MUST revert if amount is 0.
+     * - MUST revert if asset is not owned by proprietor.
+     * - MUST revert if amount is greater than the proprietor's asset balance.
      */
     function transferAssetFrom(
-        address recipient,
+        address proprietor,
         IERC20 asset,
-        address[] memory proprietors,
-        uint256[] memory amounts
+        uint256 amount,
+        address recipient
     ) external;
 
     /**
-     * @dev Partial or total refund of previously accepted deposits to proprietors.
+     * @dev Partial or total refund of previously accepted deposit to proprietor.
      *
-     * - MUST emit the RefundAssets event.
-     * - MUST revert if arrays are of different lengths.
-     * - MUST revert if any amount is 0.
-     * - MUST revert if asset is not owned by any proprietor.
-     * - MUST revert if any amount is greater than the proprietor's asset balance.
+     * - MUST emit the RefundAsset event.
+     * - MUST revert if amount is 0.
+     * - MUST revert if asset is not owned by proprietor.
+     * - MUST revert if amount is greater than the proprietor's asset balance.
      */
-    function refundAssets(
-        address[] memory proprietors,
-        IERC20[] memory assets,
-        uint256[] memory amounts
+    function refundAsset(
+        address proprietor,
+        IERC20 asset,
+        uint256 amount
     ) external;
 
     /**

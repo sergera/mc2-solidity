@@ -157,84 +157,56 @@ contract Escrow is Ownable, ReentrancyGuard, IEscrow {
     }
 
     /**
-     * @dev Owner transfers asset from proprietors to another address.
+     * @dev Owner transfers asset from proprietor to another address.
      */
     function transferAssetFrom(
-        address _recipient,
+        address _proprietor,
         IERC20 _asset,
-        address[] memory _proprietors,
-        uint256[] memory _amounts
+        uint256 _amount,
+        address _recipient
     ) external override onlyOwner nonReentrant {
+        require(_amount > 0, "Escrow: transfer 0 amount of proprietor asset");
         require(
-            _proprietors.length == _amounts.length,
-            "Escrow: array lengths do not match"
+            _assetIsOwned(_proprietor, _asset),
+            "Escrow: transfer asset not owned by proprietor"
         );
-
-        uint256 _totalAmount = 0;
-        for (uint256 i = 0; i < _proprietors.length; i++) {
-            require(
-                _amounts[i] > 0,
-                "Escrow: transfer 0 amount of proprietor asset"
-            );
-            require(
-                _assetIsOwned(_proprietors[i], _asset),
-                "Escrow: transfer asset not owned by proprietor"
-            );
-            require(
-                __assetBalancesByProprietor[_proprietors[i]][_asset] >=
-                    _amounts[i],
-                "Escrow: transfer more than proprietor balance of asset"
-            );
-            __assetBalancesByProprietor[_proprietors[i]][_asset] -= _amounts[i];
-            if (__assetBalancesByProprietor[_proprietors[i]][_asset] == 0) {
-                _removeAsset(_proprietors[i], _asset);
-            }
-            _totalAmount += _amounts[i];
+        require(
+            __assetBalancesByProprietor[_proprietor][_asset] >= _amount,
+            "Escrow: transfer more than proprietor balance of asset"
+        );
+        SafeERC20.safeTransfer(_asset, _recipient, _amount);
+        __assetBalancesByProprietor[_proprietor][_asset] -= _amount;
+        if (__assetBalancesByProprietor[_proprietor][_asset] == 0) {
+            _removeAsset(_proprietor, _asset);
         }
 
-        SafeERC20.safeTransfer(_asset, _recipient, _totalAmount);
-
-        emit TransferAssetFrom(_recipient, _asset, _proprietors, _amounts);
+        emit TransferAssetFrom(_proprietor, _asset, _amount, _recipient);
     }
 
     /**
-     * @dev Owner refunds previously accepted deposits to proprietors.
+     * @dev Owner refunds previously accepted deposit to proprietor.
      */
-    function refundAssets(
-        address[] memory _proprietors,
-        IERC20[] memory _assets,
-        uint256[] memory _amounts
+    function refundAsset(
+        address _proprietor,
+        IERC20 _asset,
+        uint256 _amount
     ) external override onlyOwner nonReentrant {
+        require(_amount > 0, "Escrow: refund 0 amount of proprietor asset");
         require(
-            _proprietors.length == _assets.length &&
-                _proprietors.length == _amounts.length,
-            "Escrow: array lengths do not match"
+            _assetIsOwned(_proprietor, _asset),
+            "Escrow: refund asset not owned by proprietor"
         );
-
-        for (uint256 i = 0; i < _proprietors.length; i++) {
-            require(
-                _amounts[i] > 0,
-                "Escrow: refund 0 amount of proprietor asset"
-            );
-            require(
-                _assetIsOwned(_proprietors[i], _assets[i]),
-                "Escrow: refund asset not owned by proprietor"
-            );
-            require(
-                __assetBalancesByProprietor[_proprietors[i]][_assets[i]] >=
-                    _amounts[i],
-                "Escrow: refund more than proprietor balance of asset"
-            );
-            SafeERC20.safeTransfer(_assets[i], _proprietors[i], _amounts[i]);
-            __assetBalancesByProprietor[_proprietors[i]][
-                _assets[i]
-            ] -= _amounts[i];
-            if (__assetBalancesByProprietor[_proprietors[i]][_assets[i]] == 0) {
-                _removeAsset(_proprietors[i], _assets[i]);
-            }
+        require(
+            __assetBalancesByProprietor[_proprietor][_asset] >= _amount,
+            "Escrow: refund more than proprietor balance of asset"
+        );
+        SafeERC20.safeTransfer(_asset, _proprietor, _amount);
+        __assetBalancesByProprietor[_proprietor][_asset] -= _amount;
+        if (__assetBalancesByProprietor[_proprietor][_asset] == 0) {
+            _removeAsset(_proprietor, _asset);
         }
 
-        emit RefundAssets(_proprietors, _assets, _amounts);
+        emit RefundAsset(_proprietor, _asset, _amount);
     }
 
     /**
