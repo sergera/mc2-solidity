@@ -127,6 +127,16 @@ interface IStrategyPool is IERC20, IERC20Metadata {
     ) external;
 
     /**
+     * @dev Burns exactly poolTokens from owner. Should be called by the Strategy Wallet if caller is admin.
+     *
+     * - MUST emit the Redeem event.
+     * - MUST revert if poolTokens is 0.
+     * - MUST revert if all of poolTokens cannot be redeemed,
+     *	 i.e. the owner not having enough poolTokens before the call.
+     */
+    function redeemAsAdmin(address owner, uint256 poolTokens) external;
+
+    /**
      * @dev Sends assets of underlying tokens to receiver.
      *
      * - MUST emit the Withdraw event.

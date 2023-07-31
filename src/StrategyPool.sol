@@ -194,6 +194,27 @@ contract StrategyPool is
     }
 
     /**
+     * @dev Burns exactly poolTokens from owner.
+     */
+    function redeemAsAdmin(
+        address _owner,
+        uint256 _poolTokens
+    ) external override whenNotPaused {
+        require(_poolTokens > 0, "StrategyPool: redeem 0 pool tokens");
+        require(
+            _poolTokens <= balanceOf(_owner),
+            "StrategyPool: redeem more than balance"
+        );
+
+        if (_msgSender() != _owner) {
+            _spendAllowance(_owner, _msgSender(), _poolTokens);
+        }
+
+        _burn(_owner, _poolTokens);
+        emit Redeem(_msgSender(), _owner, _poolTokens);
+    }
+
+    /**
      * @dev Sends underlying assets to receiver.
      */
     function withdraw(
