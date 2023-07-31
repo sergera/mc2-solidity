@@ -57,14 +57,19 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
-     * @dev Redeems all Pool tokens from (`_strategy`) to the current backer's address.
+     * @dev Redeems all Pool tokens from (`_strategy`).
      * Can only be called by the current backer or the current admin (if an admin exists).
      */
     function fullRedeemFromStrategy(
         IStrategyPool _strategy
     ) external onlyBackerOrAdmin nonReentrant {
         uint256 _poolTokens = _strategy.balanceOf(address(this));
-        _strategy.redeem(address(this), backer(), _poolTokens);
+        if (_msgSender() == backer()) {
+            _strategy.redeem(address(this), backer(), _poolTokens);
+        } else {
+            _strategy.redeemAsAdmin(address(this), _poolTokens);
+        }
+
         emit RedeemedFromStrategy(
             _msgSender(),
             _strategy,
@@ -74,14 +79,19 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
-     * @dev Redeems (`_poolTokens`) from (`_strategy`) to the current backer's address.
+     * @dev Redeems (`_poolTokens`) from (`_strategy`).
      * Can only be called by the current backer or the current admin (if an admin exists).
      */
     function redeemFromStrategy(
         IStrategyPool _strategy,
         uint256 _poolTokens
     ) external onlyBackerOrAdmin nonReentrant {
-        _strategy.redeem(address(this), backer(), _poolTokens);
+        if (_msgSender() == backer()) {
+            _strategy.redeem(address(this), backer(), _poolTokens);
+        } else {
+            _strategy.redeemAsAdmin(address(this), _poolTokens);
+        }
+
         emit RedeemedFromStrategy(
             _msgSender(),
             _strategy,
