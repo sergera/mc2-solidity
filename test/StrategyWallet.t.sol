@@ -7,6 +7,7 @@ import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {console} from "forge-std/console.sol";
 
 import {StrategyWallet} from "../src/StrategyWallet.sol";
+import {StrategyWalletHerald} from "../src/StrategyWalletHerald.sol";
 import {StrategyPool} from "../src/StrategyPool.sol";
 import {StrategyPoolHerald} from "../src/StrategyPoolHerald.sol";
 import {MockToken} from "./MockToken.sol";
@@ -26,6 +27,7 @@ contract StrategyWalletTestBasic is Test {
     StrategyPoolHerald public poolHerald;
     MockToken public mockToken;
     StrategyWallet public strategyWallet;
+    StrategyWalletHerald public walletHerald;
 
     function setUp() public {
         utils = new Utils();
@@ -34,7 +36,8 @@ contract StrategyWalletTestBasic is Test {
         alice = utils.createAccount();
         bob = utils.createAccount();
 
-        strategyWallet = new StrategyWallet(backer, admin);
+        walletHerald = new StrategyWalletHerald();
+        strategyWallet = new StrategyWallet(backer, admin, walletHerald);
 
         mockToken = new MockToken();
         poolHerald = new StrategyPoolHerald();
