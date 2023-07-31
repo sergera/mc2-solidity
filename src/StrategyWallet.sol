@@ -107,7 +107,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
      * @dev Transfers admin rights to a new account (`_newAdmin`).
      * Can only be called by the current backer or the current admin (if an admin exists).
      */
-    function transferAdminship(address _newAdmin) external onlyBackerOrAdmin {
+    function transferAdminship(address _newAdmin) external onlyAdmin {
         require(
             _newAdmin != address(0),
             "StrategyWallet: new admin is the zero address"
@@ -156,6 +156,14 @@ contract StrategyWallet is Context, ReentrancyGuard {
     }
 
     /**
+     * @dev Throws if called by any account other than the current admin (if an admin exists).
+     */
+    modifier onlyAdmin() {
+        _checkAdmin();
+        _;
+    }
+
+    /**
      * @dev Throws if called by any account other than the current backer or the current admin (if an admin exists).
      */
     modifier onlyBackerOrAdmin() {
@@ -186,6 +194,16 @@ contract StrategyWallet is Context, ReentrancyGuard {
         require(
             backer() == _msgSender(),
             "StrategyWallet: caller is not the backer"
+        );
+    }
+
+    /**
+     * @dev Throws if the sender is not the admin or if there is no admin.
+     */
+    function _checkAdmin() private view {
+        require(
+            admin() != address(0) && admin() == _msgSender(),
+            "StrategyWallet: caller is not the admin"
         );
     }
 
