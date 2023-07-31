@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {console} from "forge-std/console.sol";
@@ -826,6 +827,178 @@ contract StrategyPoolTestRedeemWithdraw is Test {
         strategyPool.redeem(address(this), address(this), 0);
     }
 
+    function test_zeroRedeemAsAdminReverts() public {
+        IERC20[] memory initialAssets = strategyPool.assets();
+        assertEq(initialAssets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newAmounts = new uint256[](1);
+        newAmounts[0] = 100;
+
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        vm.expectRevert("StrategyPool: redeem 0 pool tokens");
+        strategyPool.redeemAsAdmin(address(this), 0);
+    }
+
+    function test_redeemEmitsRedeemEventInHerald() public {
+        IERC20[] memory assets = strategyPool.assets();
+        assertEq(assets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newBalances = new uint256[](1);
+        newBalances[0] = 100;
+
+        strategyPool.deposit(
+            newAssets,
+            newBalances,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        vm.recordLogs();
+        strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+
+        assertEq(logEntries.length, 3);
+        assertEq(logEntries[0].topics.length, 3);
+        assertEq(logEntries[1].topics.length, 3);
+        assertEq(logEntries[2].topics.length, 4);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(this)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(
+            abi.decode(logEntries[0].data, (uint256)),
+            uint256(100 * 10 ** 18)
+        );
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(this)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(this)
+        );
+        assertEq(
+            abi.decode(logEntries[1].data, (uint256)),
+            uint256(100 * 10 ** 18)
+        );
+        /* strategy pool herald redeem event */
+        assertEq(
+            logEntries[2].topics[0],
+            keccak256("Redeem(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[1]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[2]))),
+            address(this)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[3]))),
+            address(this)
+        );
+        assertEq(
+            abi.decode(logEntries[2].data, (uint256)),
+            uint256(100 * 10 ** 18)
+        );
+    }
+
+    function test_redeemAsAdminDoesNotEmitEventInHerald() public {
+        IERC20[] memory assets = strategyPool.assets();
+        assertEq(assets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newBalances = new uint256[](1);
+        newBalances[0] = 100;
+
+        strategyPool.deposit(
+            newAssets,
+            newBalances,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        vm.recordLogs();
+        strategyPool.redeemAsAdmin(address(this), 100 * 10 ** 18);
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+
+        assertEq(logEntries.length, 2);
+        assertEq(logEntries[0].topics.length, 3);
+        assertEq(logEntries[1].topics.length, 3);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(this)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(
+            abi.decode(logEntries[0].data, (uint256)),
+            uint256(100 * 10 ** 18)
+        );
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(this)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(this)
+        );
+        assertEq(
+            abi.decode(logEntries[1].data, (uint256)),
+            uint256(100 * 10 ** 18)
+        );
+    }
+
     function test_withdrawTransfersTokens() public {
         IERC20[] memory initialAssets = strategyPool.assets();
         assertEq(initialAssets.length, 0);
@@ -966,6 +1139,37 @@ contract StrategyPoolTestRedeemWithdraw is Test {
         assertEq(strategyPool.totalSupply(), 100 * 10 ** 18);
 
         strategyPool.redeem(address(this), address(this), 100 * 10 ** 18);
+
+        assertEq(strategyPool.balanceOf(address(this)), 0);
+        assertEq(strategyPool.totalSupply(), 0);
+    }
+
+    function test_redeemAsAdminBurnsShares() public {
+        IERC20[] memory initialAssets = strategyPool.assets();
+        assertEq(initialAssets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newAmounts = new uint256[](1);
+        newAmounts[0] = 100;
+
+        assertEq(mockToken.balanceOf(address(this)), 100);
+
+        strategyPool.deposit(
+            newAssets,
+            newAmounts,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        assertEq(strategyPool.balanceOf(address(this)), 100 * 10 ** 18);
+        assertEq(strategyPool.totalSupply(), 100 * 10 ** 18);
+
+        strategyPool.redeemAsAdmin(address(this), 100 * 10 ** 18);
 
         assertEq(strategyPool.balanceOf(address(this)), 0);
         assertEq(strategyPool.totalSupply(), 0);
