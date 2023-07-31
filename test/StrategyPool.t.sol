@@ -229,6 +229,42 @@ contract StrategyPoolTestBasic is Test {
         assertEq(mockToken.balanceOf(address(strategyPool)), 100);
     }
 
+    function test_redeem_as_admin() public {
+        IERC20[] memory assets = strategyPool.assets();
+        assertEq(assets.length, 0);
+
+        mockToken.mint(address(this), 100);
+        mockToken.approve(address(strategyPool), 100);
+
+        IERC20[] memory newAssets = new IERC20[](1);
+        newAssets[0] = mockToken;
+
+        uint256[] memory newBalances = new uint256[](1);
+        newBalances[0] = 100;
+
+        strategyPool.deposit(
+            newAssets,
+            newBalances,
+            100 * 10 ** 18,
+            address(this)
+        );
+
+        strategyPool.redeemAsAdmin(address(this), 100 * 10 ** 18);
+
+        (
+            IERC20[] memory afterAssets,
+            uint256[] memory afterBalances
+        ) = strategyPool.assetsAndBalances();
+
+        assertEq(afterAssets.length, 1);
+        assertEq(address(afterAssets[0]), address(mockToken));
+        assertEq(afterBalances.length, 1);
+        assertEq(afterBalances[0], 100);
+        assertEq(strategyPool.balanceOf(address(this)), 0);
+        assertEq(strategyPool.totalSupply(), 0);
+        assertEq(mockToken.balanceOf(address(strategyPool)), 100);
+    }
+
     function test_withdraw() public {
         IERC20[] memory assets = strategyPool.assets();
         assertEq(assets.length, 0);
