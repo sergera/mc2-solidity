@@ -15,6 +15,7 @@ import {Context} from "openzeppelin-contracts/contracts/utils/Context.sol";
 import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 import {IStrategyPool} from "./IStrategyPool.sol";
+import {IStrategyWalletHerald} from "./IStrategyWalletHerald.sol";
 
 contract StrategyWallet is Context, ReentrancyGuard {
     /**
@@ -28,6 +29,8 @@ contract StrategyWallet is Context, ReentrancyGuard {
      * Can only be changed by the backer or the admin (if there is an admin)
      */
     address private __admin;
+
+    IStrategyWalletHerald private __herald;
 
     event RedeemedFromStrategy(
         address indexed sender,
@@ -45,7 +48,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
         address indexed newAdmin
     );
 
-    constructor(address _backer, address _admin) {
+    constructor(address _backer, address _admin, address _herald) {
         require(
             _backer != address(0),
             "StrategyWallet: backer is the zero address"
@@ -54,6 +57,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
         if (_admin != address(0)) {
             __admin = _admin;
         }
+        __herald = _herald;
     }
 
     /**
@@ -110,6 +114,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
      * and adds another account as admin.
      */
     function revokeAdminship() external onlyBackerOrAdmin {
+        __herald.proclaimRevokeAdminship(admin());
         _transferAdminship(address(0));
     }
 
