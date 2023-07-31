@@ -48,13 +48,17 @@ contract StrategyWallet is Context, ReentrancyGuard {
         address indexed newAdmin
     );
 
-    constructor(address _backer, address _admin, address _herald) {
+    constructor(
+        address _backer,
+        address _admin,
+        IStrategyWalletHerald _herald
+    ) {
         require(
             _backer != address(0),
             "StrategyWallet: backer is the zero address"
         );
         require(
-            _herald != address(0),
+            address(_herald) != address(0),
             "StrategyWallet: herald is the zero address"
         );
         __backer = _backer;
