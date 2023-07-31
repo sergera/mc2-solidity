@@ -53,6 +53,10 @@ contract StrategyWallet is Context, ReentrancyGuard {
             _backer != address(0),
             "StrategyWallet: backer is the zero address"
         );
+        require(
+            _herald != address(0),
+            "StrategyWallet: herald is the zero address"
+        );
         __backer = _backer;
         if (_admin != address(0)) {
             __admin = _admin;
