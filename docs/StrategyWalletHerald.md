@@ -5,16 +5,16 @@ The MC²Fi `StrategyWalletHerald` contract aggregates important strategy wallet 
 ## Deployment Addresses
 
 _Ethereum_:
-
+0x998FEfd555Ee7B4d7177FCA9eA738006B42bFaf3
 
 _Goerli:_
-
+0x0a774e2412D10DFa754Eb969d79157FF81939C96
 
 _BSC_:
-
+0x783eE283715F15Ec61fBE2233C47225364acd63b
 
 _BSC Testnet_:
-
+0x9BBd6eE629d3A28bbeAf5f8Bf9554137fDCE2700
 
 ### Public Functions
 All functions in this contract are public, considering that the validity of the events can always be checked since they include the caller address.
