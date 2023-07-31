@@ -66,7 +66,7 @@ _Parameters:_
 - `newAdmin`: Address of new Admin account.
 
 _Description:_
-Should be called by the Backer or the Admin in order to change the account that, along with the Backer account, is able to call some of this contract's functions. This function also emits the `AdminshipTransferred` event, which can be listened to off-chain.
+Should be called by the Admin in order to change the account that, along with the Backer account, is able to call some of this contract's functions. This function also emits the `AdminshipTransferred` event, which can be listened to off-chain.
 
 ---
 
