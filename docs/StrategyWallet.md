@@ -6,14 +6,13 @@ It holds the address for a Backer account, and optionally, an Admin account, tha
 
 Both are parameterized in the constructor (`address(0)` for no Admin), and after contract creation the backer can:
 - redeem Pool tokens from a `StrategyPool`
-- change the Admin account
 - revoke the Admin account
 - change the Backer account
 
 , and the Admin can:
 - redeem Pool tokens from a `StrategyPool`
-- change the Admin account
 - revoke the Admin account
+- change the Admin account
 
 ## Backer Only Functions
 Functions that can only be called by the contract's backer (parameterized in the constructor), this contract only has one, which is responsible for changing the Backer account itself.
@@ -27,6 +26,20 @@ _Parameters:_
 
 _Description:_
 Should be called by the Backer in order to change the account that redeems Pool tokens this contract may own. This function also emits the `BackershipTransferred` event, which can be listened to off-chain.
+
+---
+
+## Admin Only Functions
+
+#### `transferAdminship(address newAdmin)`
+
+Changes this contract's Admin account to another account.
+
+_Parameters:_
+- `newAdmin`: Address of new Admin account.
+
+_Description:_
+Should be called by the Admin in order to change the account that, along with the Backer account, is able to call some of this contract's functions. This function also emits the `AdminshipTransferred` event, which can be listened to off-chain.
 
 ---
 
@@ -58,24 +71,15 @@ Should be called by the Backer or the Admin in order to redeem Pool tokens. This
 
 ---
 
-#### `transferAdminship(address newAdmin)`
-
-Changes this contract's Admin account to another account.
-
-_Parameters:_
-- `newAdmin`: Address of new Admin account.
-
-_Description:_
-Should be called by the Admin in order to change the account that, along with the Backer account, is able to call some of this contract's functions. This function also emits the `AdminshipTransferred` event, which can be listened to off-chain.
-
----
-
 #### `revokeAdminship()`
 
 Removes any admin rights by setting the Admin account address to `address(0)`.
 
 _Description:_
 Should be called by the Backer or the Admin in order to remove any and all Admin permissions. This function also emits the `AdminshipTransferred` event, which can be listened to off-chain.
+
+_NOTE:_
+This function calls `proclaimRevokeAdminship` in the StrategyWalletHerald contract if the caller is the registered "backer" account, so that all user-driven `revokeAdminship` calls can be easily listened to.
 
 ---
 
