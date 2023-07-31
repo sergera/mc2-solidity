@@ -110,12 +110,11 @@ contract StrategyWallet is Context, ReentrancyGuard {
 
     /**
      * @dev Revoke any admin rights by changing the admin to the zero address.
-     * Can only be called by the current backer.
+     * Can only be called by the current backer or the current admin (if an admin exists).
      *
      * NOTE: Revoking adminship will leave the contract without an admin,
      * thereby any functionality that was available to both the backer and the admin
-     * will be only available to the backer until the event that the backer calls `transferAdminship`
-     * and adds another account as admin.
+     * will be only available to the backer indefinitely.
      */
     function revokeAdminship() external onlyBackerOrAdmin {
         require(
@@ -130,7 +129,7 @@ contract StrategyWallet is Context, ReentrancyGuard {
 
     /**
      * @dev Transfers admin rights to a new account (`_newAdmin`).
-     * Can only be called by the current backer or the current admin (if an admin exists).
+     * Can only be called by the current admin (if an admin exists).
      */
     function transferAdminship(address _newAdmin) external onlyAdmin {
         require(
