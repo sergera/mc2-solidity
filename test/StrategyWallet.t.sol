@@ -119,6 +119,20 @@ contract StrategyWalletTestBasic is Test {
         assertEq(strategyWallet.admin(), admin);
     }
 
+    function test_revokeAdminshipAsAdmin() public {
+        // backer can revoke admin
+        vm.prank(admin);
+        strategyWallet.revokeAdminship();
+        assertEq(strategyWallet.admin(), address(0));
+    }
+
+    function test_revokeAdminshipAsBacker() public {
+        // backer can revoke admin
+        vm.prank(backer);
+        strategyWallet.revokeAdminship();
+        assertEq(strategyWallet.admin(), address(0));
+    }
+
     function test_redeemFromStrategy() public {
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
