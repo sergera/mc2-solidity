@@ -93,17 +93,6 @@ contract StrategyWalletTestBasic is Test {
     }
 
     function test_transferAdminship() public {
-        // backer can transfer admin
-        assertEq(strategyWallet.admin(), admin);
-        vm.prank(backer);
-        strategyWallet.transferAdminship(alice);
-        assertEq(strategyWallet.admin(), alice);
-
-        // reset
-        vm.prank(alice);
-        strategyWallet.transferAdminship(admin);
-        assertEq(strategyWallet.admin(), admin);
-
         // admin can transfer admin
         vm.prank(admin);
         strategyWallet.transferAdminship(alice);
@@ -114,11 +103,15 @@ contract StrategyWalletTestBasic is Test {
         strategyWallet.transferAdminship(admin);
         assertEq(strategyWallet.admin(), admin);
 
+        // backer cannot transfer admin
+        assertEq(strategyWallet.admin(), admin);
+        vm.prank(backer);
+        vm.expectRevert("StrategyWallet: caller is not the admin");
+        strategyWallet.transferAdminship(alice);
+
         // someone else cannot transfer admin
         vm.prank(alice);
-        vm.expectRevert(
-            "StrategyWallet: caller is not the backer nor the admin"
-        );
+        vm.expectRevert("StrategyWallet: caller is not the admin");
         strategyWallet.transferAdminship(bob);
         assertEq(strategyWallet.admin(), admin);
     }
