@@ -51,6 +51,14 @@ contract StrategyPool is
         address _newOwner,
         IStrategyPoolHerald _herald
     ) ERC20(_name, _symbol) {
+        require(
+            _newOwner != address(0),
+            "StrategyPool: new owner is the zero address"
+        );
+        require(
+            _herald != address(0),
+            "StrategyWallet: herald is the zero address"
+        );
         _transferOwnership(_newOwner);
         __herald = _herald;
     }
