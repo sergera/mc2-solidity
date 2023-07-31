@@ -125,10 +125,11 @@ contract StrategyWallet is Context, ReentrancyGuard {
             admin() != address(0),
             "StrategyWallet: call to revoke but admin is already the zero address"
         );
-        if (_msgSender() == backer()) {
-            __herald.proclaimRevokeAdminship(admin());
-        }
+        address _oldAdmin = admin();
         _transferAdminship(address(0));
+        if (_msgSender() == backer()) {
+            __herald.proclaimRevokeAdminship(_oldAdmin);
+        }
     }
 
     /**
