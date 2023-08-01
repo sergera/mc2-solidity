@@ -57,7 +57,7 @@ contract StrategyPool is
         );
         require(
             address(_herald) != address(0),
-            "StrategyWallet: herald is the zero address"
+            "StrategyPool: herald is the zero address"
         );
         _transferOwnership(_newOwner);
         __herald = _herald;
