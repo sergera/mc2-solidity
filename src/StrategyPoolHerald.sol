@@ -27,9 +27,9 @@ contract StrategyPoolHerald is Context, IStrategyPoolHerald {
      */
     function proclaimRedeem(
         address _owner,
-        address _receiver,
+        address _backer,
         uint256 _amount
     ) external override {
-        emit Redeem(_msgSender(), _owner, _receiver, _amount);
+        emit Redeem(_msgSender(), _owner, _backer, _amount);
     }
 }
