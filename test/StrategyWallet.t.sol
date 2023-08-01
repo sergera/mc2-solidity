@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Test, stdStorage, StdStorage} from "forge-std/Test.sol";
+import {VmSafe} from "forge-std/Vm.sol";
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {Math} from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import {console} from "forge-std/console.sol";
@@ -133,6 +134,75 @@ contract StrategyWalletTestBasic is Test {
         assertEq(strategyWallet.admin(), address(0));
     }
 
+    function test_revokeAdminshipAsBackerEmitsRevokeInHerald() public {
+        vm.recordLogs();
+        vm.prank(backer);
+        strategyWallet.revokeAdminship();
+        assertEq(strategyWallet.admin(), address(0));
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+
+        assertEq(logEntries.length, 2);
+        /* strategy wallet AdminshipTransferred event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("AdminshipTransferred(address,address,address)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(backer)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(admin)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[3]))),
+            address(0)
+        );
+        /* strategy wallet herald RevokeAdminship event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("RevokeAdminship(address,address)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(admin)
+        );
+    }
+
+    function test_revokeAdminshipAsAdminDoesNotEmitRevokeInHerald() public {
+        vm.recordLogs();
+        vm.prank(admin);
+        strategyWallet.revokeAdminship();
+        assertEq(strategyWallet.admin(), address(0));
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+
+        assertEq(logEntries.length, 1);
+        /* strategy wallet AdminshipTransferred event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("AdminshipTransferred(address,address,address)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(admin)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(admin)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[3]))),
+            address(0)
+        );
+    }
+
     function test_redeemFromStrategy() public {
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
@@ -156,6 +226,148 @@ contract StrategyWalletTestBasic is Test {
         strategyWallet.redeemFromStrategy(strategyPool, 10);
     }
 
+    function test_redeemFromStrategyAsBackerEmitsRedeemEventInStrategyPoolHerald()
+        public
+    {
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(mockToken.balanceOf(backer), 0);
+
+        vm.recordLogs();
+        vm.prank(backer);
+        strategyWallet.redeemFromStrategy(strategyPool, 10);
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 90);
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+        assertEq(logEntries.length, 4);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(abi.decode(logEntries[0].data, (uint256)), uint256(10));
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(abi.decode(logEntries[1].data, (uint256)), uint256(10));
+        /* strategy pool herald redeem event */
+        assertEq(
+            logEntries[2].topics[0],
+            keccak256("Redeem(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[1]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[2].data, (uint256)), uint256(10));
+        /* strategy wallet redeem from strategy event */
+        assertEq(
+            logEntries[3].topics[0],
+            keccak256("RedeemedFromStrategy(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[1]))),
+            address(backer)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[2]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[3].data, (uint256)), uint256(10));
+    }
+
+    function test_redeemFromStrategyAsAdminDoesNotEmitRedeemEventInStrategyPoolHerald()
+        public
+    {
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(mockToken.balanceOf(backer), 0);
+
+        vm.recordLogs();
+        vm.prank(admin);
+        strategyWallet.redeemFromStrategy(strategyPool, 10);
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 90);
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+        assertEq(logEntries.length, 3);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(abi.decode(logEntries[0].data, (uint256)), uint256(10));
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(abi.decode(logEntries[1].data, (uint256)), uint256(10));
+        /* strategy wallet redeem from strategy event */
+        assertEq(
+            logEntries[2].topics[0],
+            keccak256("RedeemedFromStrategy(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[1]))),
+            address(admin)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[2]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[2].data, (uint256)), uint256(10));
+    }
+
     function test_fullRedeemFromStrategyAsBacker() public {
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
         assertEq(strategyPool.assetBalance(mockToken), 100);
@@ -176,5 +388,147 @@ contract StrategyWalletTestBasic is Test {
 
         assertEq(strategyPool.balanceOf(address(strategyWallet)), 0);
         assertEq(strategyPool.assetBalance(mockToken), 100);
+    }
+
+    function test_fullRedeemFromStrategyAsBackerEmitsRedeemEventInStrategyPoolHerald()
+        public
+    {
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(mockToken.balanceOf(backer), 0);
+
+        vm.recordLogs();
+        vm.prank(backer);
+        strategyWallet.fullRedeemFromStrategy(strategyPool);
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 0);
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+        assertEq(logEntries.length, 4);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(abi.decode(logEntries[0].data, (uint256)), uint256(100));
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(abi.decode(logEntries[1].data, (uint256)), uint256(100));
+        /* strategy pool herald redeem event */
+        assertEq(
+            logEntries[2].topics[0],
+            keccak256("Redeem(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[1]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[2].data, (uint256)), uint256(100));
+        /* strategy wallet redeem from strategy event */
+        assertEq(
+            logEntries[3].topics[0],
+            keccak256("RedeemedFromStrategy(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[1]))),
+            address(backer)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[2]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[3].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[3].data, (uint256)), uint256(100));
+    }
+
+    function test_fullRedeemFromStrategyAsAdminDoesNotEmitRedeemEventInStrategyPoolHerald()
+        public
+    {
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 100);
+        assertEq(strategyPool.assetBalance(mockToken), 100);
+        assertEq(mockToken.balanceOf(backer), 0);
+
+        vm.recordLogs();
+        vm.prank(admin);
+        strategyWallet.fullRedeemFromStrategy(strategyPool);
+        assertEq(strategyPool.balanceOf(address(strategyWallet)), 0);
+
+        VmSafe.Log[] memory logEntries = vm.getRecordedLogs();
+        assertEq(logEntries.length, 3);
+        /* ERC20 burn Transfer event */
+        assertEq(
+            logEntries[0].topics[0],
+            keccak256("Transfer(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[0].topics[2]))),
+            address(0)
+        );
+        assertEq(abi.decode(logEntries[0].data, (uint256)), uint256(100));
+        /* strategy pool redeem event */
+        assertEq(
+            logEntries[1].topics[0],
+            keccak256("Redeem(address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[1]))),
+            address(strategyWallet)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[1].topics[2]))),
+            address(strategyWallet)
+        );
+        assertEq(abi.decode(logEntries[1].data, (uint256)), uint256(100));
+        /* strategy wallet redeem from strategy event */
+        assertEq(
+            logEntries[2].topics[0],
+            keccak256("RedeemedFromStrategy(address,address,address,uint256)")
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[1]))),
+            address(admin)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[2]))),
+            address(strategyPool)
+        );
+        assertEq(
+            address(uint160(uint256(logEntries[2].topics[3]))),
+            address(backer)
+        );
+        assertEq(abi.decode(logEntries[2].data, (uint256)), uint256(100));
     }
 }
