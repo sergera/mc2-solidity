@@ -107,41 +107,22 @@ Burns exactly poolTokens from an owner account's balance. A call to this functio
 
 _Parameters:_
 - `owner`: Pool token owner account's address.
-- `receiver`: Address of the account registered as "backer" in the Strategy Wallet contract.
+- `backer`: Address of the account registered as "backer" in the Strategy Wallet contract.
 - `poolTokens`: Amount of pool tokens to be burned.
+- `shouldProclaim`: Boolean indicating if the contract should call the event aggregator to emit an event on it.
 
 _Reverts if:_
 - `poolTokens` is zero.
 - `poolTokens` > balance of `owner`.
 
 _Description:_
-Should be called by the Strategy Wallet contract when the caller is the registered "backer" account to trigger backend to retrieve underlying assets by burning it's pool tokens. Along with the burn. This function also emits the `Redeem` event, which can be listened to off-chain.
+Should be called by the Strategy Wallet contract to trigger backend to retrieve underlying assets by burning it's pool tokens. When the caller is the registered "backer" account "shouldProclaim" is true so the backend can listen to the self-redeem call, when the caller is the registered "admin" account (if there is one), "shouldProclaim" is false. Along with the burn. This function also emits the `Redeem` event, which can be listened to off-chain.
 
 _NOTE:_
 This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to protect users from redeeming less assets than they are entitled to.
 
 _NOTE:_
-This function calls `proclaimRedeem` in the StrategyPoolHerald contract, so that all `redeem` calls can be easily listened to.
-
----
-
-#### `redeemAsAdmin(address owner, uint256 poolTokens)`
-
-Burns exactly poolTokens from an owner account's balance.
-
-_Parameters:_
-- `owner`: Pool token owner account's address.
-- `poolTokens`: Amount of pool tokens to be burned.
-
-_Reverts if:_
-- `poolTokens` is zero.
-- `poolTokens` > balance of `owner`.
-
-_Description:_
-Should be called by the Strategy Wallet contract when the caller is the registered "admin" account to burn it's pool tokens. Along with the burn. This function also emits the `Redeem` event, which can be listened to off-chain.
-
-_NOTE:_
-This function is locked when the contract is actively trading (i.e. between a `acquireAssetBeforeTrade` and a `giveBackAssetsAfterTrade` call), to protect users from redeeming less assets than they are entitled to.
+This function calls `proclaimRedeem` in the StrategyPoolHerald contract when "shouldProclaim" is true (when the call is originally made by the backer directly), so that all self-`redeem` calls can be easily listened to.
 
 ---
 
