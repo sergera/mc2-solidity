@@ -183,8 +183,9 @@ contract StrategyPool is
      */
     function redeem(
         address _owner,
-        address _receiver,
-        uint256 _poolTokens
+        address _backer,
+        uint256 _poolTokens,
+        bool _shouldProclaim
     ) external override whenNotPaused {
         require(_poolTokens > 0, "StrategyPool: redeem 0 pool tokens");
         require(
@@ -198,28 +199,9 @@ contract StrategyPool is
 
         _burn(_owner, _poolTokens);
         emit Redeem(_msgSender(), _owner, _poolTokens);
-        __herald.proclaimRedeem(_owner, _receiver, _poolTokens);
-    }
-
-    /**
-     * @dev Burns exactly poolTokens from owner.
-     */
-    function redeemAsAdmin(
-        address _owner,
-        uint256 _poolTokens
-    ) external override whenNotPaused {
-        require(_poolTokens > 0, "StrategyPool: redeem 0 pool tokens");
-        require(
-            _poolTokens <= balanceOf(_owner),
-            "StrategyPool: redeem more than balance"
-        );
-
-        if (_msgSender() != _owner) {
-            _spendAllowance(_owner, _msgSender(), _poolTokens);
+        if (_shouldProclaim) {
+            __herald.proclaimRedeem(_owner, _backer, _poolTokens);
         }
-
-        _burn(_owner, _poolTokens);
-        emit Redeem(_msgSender(), _owner, _poolTokens);
     }
 
     /**
