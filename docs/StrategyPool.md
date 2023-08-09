@@ -142,6 +142,24 @@ Should be called by the owner in case of an emergency, e.g. something that requi
 
 ---
 
+#### `pause()`
+
+Manually locks the contract (lock consequences described above).
+
+_Description:_
+Should be called by the owner in case of an emergency.
+
+---
+
+#### `unpause()`
+
+Manually unlocks the contract (lock consequences described above).
+
+_Description:_
+Should be called by the owner in case of an emergency.
+
+---
+
 ### Public Functions
 Public functions can be called by off-chain services or directly by users to redeem pool tokens, or just to acquire information on the Pool's status.
 
