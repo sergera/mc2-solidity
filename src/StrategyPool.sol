@@ -305,6 +305,53 @@ contract StrategyPool is
     }
 
     /**
+     * @dev Owner changes asset address / amount directly.
+     */
+    function migrateAsset(
+        IERC20 _oldAsset,
+        IERC20 _newAsset,
+        uint256 _newAmount
+    ) external override onlyOwner {
+        require(
+            _oldAsset != IERC20(address(0)) && _newAsset != IERC20(address(0)),
+            "StrategyPool: migrate asset with 0 address"
+        );
+        require(_newAmount > 0, "StrategyPool: migrate asset with 0 amount");
+        require(
+            _assetIsOwned(_oldAsset),
+            "StrategyPool: migrate unowned asset"
+        );
+        require(
+            !_assetIsOwned(_newAsset),
+            "StrategyPool: migrate to owned asset"
+        );
+        _removeAsset(_oldAsset);
+        assetBalances[_oldAsset] = 0;
+        _addAsset(_newAsset);
+        assetBalances[_newAsset] = _newAmount;
+    }
+
+    /**
+     * @dev Owner rescues assets in case of emergency.
+     */
+    function rescueAssets(
+        address _receiver,
+        IERC20[] memory _assets,
+        uint256[] memory _amounts
+    ) external override onlyOwner {
+        require(_receiver != address(0), "Strategy Pool: rescue to 0 address");
+        require(
+            _assets.length == _amounts.length,
+            "Strategy Pool: array lengths do not match"
+        );
+
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(_amounts[i] > 0, "Strategy Pool: rescue 0 amount");
+            SafeERC20.safeTransfer(_assets[i], _receiver, _amounts[i]);
+        }
+    }
+
+    /**
      * @dev Adds a knowingly previously unowned asset.
      * NOTE: should NOT be called on an owned asset.
      */

@@ -168,4 +168,34 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         IERC20[] calldata assets,
         uint256[] calldata amounts
     ) external;
+
+    /**
+     * @dev Owner changes asset address / amount directly.
+     *
+     * - MUST emit the GiveBackAfterTrade event.
+     * - MUST revert if oldAsset is not owned by the Pool.
+     * - MUST revert if newAsset is owned by the Pool.
+     * - MUST revert if any asset is 0 address.
+     * - MUST revert if newAmount is 0.
+     */
+    function migrateAsset(
+        IERC20 oldAsset,
+        IERC20 newAsset,
+        uint256 newAmount
+    ) external;
+
+    /**
+     * @dev Owner rescues assets in case of emergency.
+     *
+     * - MUST revert if input arrays have different lengths.
+     * - MUST revert if any amount is 0.
+     * - MUST revert if receiver is 0 address.
+     * - MUST revert if all of assets cannot be transferred,
+     *	 i.e. the pool not having enough assets before the call.
+     */
+    function rescueAssets(
+        address receiver,
+        IERC20[] memory assets,
+        uint256[] memory amounts
+    ) external;
 }
