@@ -131,6 +131,11 @@ interface IStrategyPool is IERC20, IERC20Metadata {
      * @dev Sends assets of underlying tokens to receiver.
      *
      * - MUST emit the Withdraw event.
+     * - MUST revert if input arrays have different lengths.
+     * - MUST revert if any amount is 0.
+     * - MUST revert if receiver is 0 address.
+     * - MUST revert if any asset is not owned by the Pool.
+     * - MUST revert if any amount is greater than the asset balance.
      * - MUST revert if all of assets cannot be withdrawn,
      *	 i.e. the pool not having enough assets before the call.
      */

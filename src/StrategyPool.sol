@@ -212,7 +212,25 @@ contract StrategyPool is
         IERC20[] memory _assets,
         uint256[] memory _amounts
     ) external override whenNotPaused nonReentrant onlyOwner {
+        require(
+            _receiver != address(0),
+            "Strategy Pool: withdraw to 0 address"
+        );
+        require(
+            _assets.length == _amounts.length,
+            "Strategy Pool: array lengths do not match"
+        );
+
         for (uint256 i = 0; i < _assets.length; i++) {
+            require(_amounts[i] > 0, "Strategy Pool: withdraw 0 amount");
+            require(
+                _assetIsOwned(_assets[i]),
+                "StrategyPool: withdraw unowned asset"
+            );
+            require(
+                assetBalances[_assets[i]] >= _amounts[i],
+                "StrategyPool: withdraw more than balance"
+            );
             SafeERC20.safeTransfer(_assets[i], _receiver, _amounts[i]);
             assetBalances[_assets[i]] -= _amounts[i];
             if (assetBalances[_assets[i]] == 0) {
