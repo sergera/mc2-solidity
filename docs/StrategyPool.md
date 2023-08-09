@@ -38,7 +38,11 @@ _Parameters:_
 - `amounts`: Corresponding amounts of each asset.
 
 _Reverts if:_
-- `asset` or `amount` not owned by contract.
+- any `asset` not currently owned by the Pool.
+- any `amount` is zero.
+- any `amount` > the Pool's owned balance of the asset.
+- `receiver` is address 0.
+- `assets` and `amounts` array length mismatch.
 
 _Description:_
 Should be called by the owner to transfer underlying assets to a user after reading a `redeem` call.The underlying asset difference is recorded in the contract's internal balance controls. This function also emits the `Withdraw` event, which can be listened to off-chain.
