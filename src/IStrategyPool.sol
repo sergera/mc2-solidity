@@ -198,4 +198,14 @@ interface IStrategyPool is IERC20, IERC20Metadata {
         IERC20[] memory assets,
         uint256[] memory amounts
     ) external;
+
+    /**
+     * @dev Owner pauses contract manually.
+     */
+    function pause() external;
+
+    /**
+     * @dev Owner unpauses contract manually.
+     */
+    function unpause() external;
 }

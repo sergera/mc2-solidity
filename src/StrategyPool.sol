@@ -352,6 +352,20 @@ contract StrategyPool is
     }
 
     /**
+     * @dev Owner pauses contract manually.
+     */
+    function pause() external override onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @dev Owner unpauses contract manually.
+     */
+    function unpause() external override onlyOwner {
+        _unpause();
+    }
+
+    /**
      * @dev Adds a knowingly previously unowned asset.
      * NOTE: should NOT be called on an owned asset.
      */
