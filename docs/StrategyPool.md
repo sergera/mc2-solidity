@@ -81,6 +81,26 @@ The workflow is as follows:
 
 ---
 
+#### `giveBackAssetsAfterTrade(IERC20[] assets, int256[] amounts)`
+
+Transfer assets and amounts to Pool.
+
+_Parameters:_
+- `assets`: Array of asset addresses to give the Pool.
+- `amounts`: Corresponding amounts of each asset remaining after trade.
+
+_Reverts if:_
+- `assets` and `amounts` array length mismatch.
+- any `amount` is zero.
+
+_Description:_
+Should be called by the owner after performing a trade. This call will unlock the `acquireAssetBeforeTrade` and `redeem`functions. This function also emits the `GiveBackAfterTrade` event, which can be listened to off-chain.
+
+_NOTE:_
+This function unlocks all functions that were locked with a `acquireAssetBeforeTrade` call.
+
+---
+
 #### `migrateAsset(IERC20 oldAsset, IERC20 newAsset, uint256 newAmount)`
 
 Changes asset address / amount in Strategy Pool storage.
@@ -119,26 +139,6 @@ _Reverts if:_
 
 _Description:_
 Should be called by the owner in case of an emergency, e.g. something that requires the creation of another Strategy Pool.
-
----
-
-#### `giveBackAssetsAfterTrade(IERC20[] assets, int256[] amounts)`
-
-Transfer assets and amounts to Pool.
-
-_Parameters:_
-- `assets`: Array of asset addresses to give the Pool.
-- `amounts`: Corresponding amounts of each asset remaining after trade.
-
-_Reverts if:_
-- `assets` and `amounts` array length mismatch.
-- any `amount` is zero.
-
-_Description:_
-Should be called by the owner after performing a trade. This call will unlock the `acquireAssetBeforeTrade` and `redeem`functions. This function also emits the `GiveBackAfterTrade` event, which can be listened to off-chain.
-
-_NOTE:_
-This function unlocks all functions that were locked with a `acquireAssetBeforeTrade` call.
 
 ---
 
