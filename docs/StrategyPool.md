@@ -61,7 +61,7 @@ _Parameters:_
 - `amount`: Amount of asset to be traded.
 
 _Reverts if:_
-- `asset` is not currently owned by the Pool.
+- `asset` not currently owned by the Pool.
 - `amount` is zero.
 - `amount` > the Pool's owned balance of the asset.
 - `poolTokens` > `maxMint()`.
@@ -78,6 +78,47 @@ The workflow is as follows:
 - owner calls `giveBackAssetsAfterTrade`with tokens and amounts held after the trade
 - Pool transfers tokens after the trade to itself and updates its balances
 - Pool unlocks this function, the `redeem` function, and the `withdraw` function, as well as any view functions with asset related queries.
+
+---
+
+#### `migrateAsset(IERC20 oldAsset, IERC20 newAsset, uint256 newAmount)`
+
+Changes asset address / amount in Strategy Pool storage.
+
+_Parameters:_
+- `oldAsset`: Asset address pertaining to the old asset contract.
+- `newAsset`: Asset address pertaining to the new asset contract.
+- `newAmount`: Amount of asset owned by Strategy Pool in the new contract.
+
+_Reverts if:_
+- `oldAsset` not currently owned by the Pool.
+- `newAsset` currently owned by the Pool.
+- `oldAsset` or `newAsset` is address 0.
+- `newAmount` is zero.
+
+_Description:_
+Should be called by the owner in case that one the underlying assets migrate contracts, to update the Strategy Pool asset storage.
+
+---
+
+#### `rescueAssets(address receiver, IERC20[] assets, uint256[] amounts)`
+
+Sends assets of underlying tokens to receiver's account.
+
+_Parameters:_
+- `receiver`: Assets recipient account's address.
+- `assets`: Array of asset addresses.
+- `amounts`: Corresponding amounts of each asset.
+
+_Reverts if:_
+- any `asset` not currently owned by the Pool.
+- any `amount` is zero.
+- any `amount` > the Pool's owned balance of the asset.
+- `receiver` is address 0.
+- `assets` and `amounts` array length mismatch.
+
+_Description:_
+Should be called by the owner in case of an emergency, e.g. something that requires the creation of another Strategy Pool.
 
 ---
 
