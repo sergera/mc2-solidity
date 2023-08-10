@@ -338,7 +338,7 @@ contract StrategyPool is
         address _receiver,
         IERC20[] memory _assets,
         uint256[] memory _amounts
-    ) external override onlyOwner {
+    ) external override onlyOwner nonReentrant {
         require(_receiver != address(0), "Strategy Pool: rescue to 0 address");
         require(
             _assets.length == _amounts.length,
