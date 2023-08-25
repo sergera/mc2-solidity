@@ -1,0 +1,63 @@
+I've finished the implementation of the StrategyPool contract, or at least my first crack at it.
+
+I'm working on testing it and making sure its shortcomings (which are inevitable, even in a single token vault contract), fall in an acceptable range, but meanwhile I'd like to share some details with you guys of hard decisions I've made, in order to get feedback:
+
+- share minting priority in 
+
+- I've implemented some security features we don't need and make the contract more expensive in hopes of making the contract score higher in audits:
+1) Vaults and vault-like contracts have special vulnerability to donation and inflation attacks, in order to mitigate this I've implemented internal balance control for each token, BUT we don't need it, from what I understand inflation attacks involve specific deposits by the attacker, and we control deposits.
+Either way, with internal control inflation and donation attacks should be rendered useless, read more about those here:
+https://mixbytes.io/blog/overview-of-the-inflation-attack
+https://github.com/OpenZeppelin/openzeppelin-contracts/issues/3706
+
+2) I've used OpenZeppelin's safeApprove, safeIncreaseAllowance, and safeDecreaseAllowance, for approvals, they are built to stop the approved account from front-running a non-zero to non-zero allowance approval and spending the allowance before the user can approve the second amount, but we don't need it, since the approved contract is ours, and we don't want to front-run our own pools.
+
+Even though these features make the contract more expensive, and apparently with no use, they also make it more secure when being considered in isolation, which I imagine an auditor will do.
+
+- The original OpenZeppelin implementation jumps through all sorts of hoops to mitigate rounding errors, like scaling up the precision of the share in relation to the underlying asset, and calculating the "precision difference" between the share and underlying asset, I have choosen not to do any of that since in our system (that will allow for multiple underlying assets with potentially multiple precisions) there is no sound way I can see to do that, so we just admit rounding errors, I'll try to test that and make sure they are not too great.
+- The original OpenZeppelin interface requires that view functions that predict amounts of shares and assets to be minted/returned should not revert, so the implementation adds "1" to numerator and denominator values when calculating to avoid reversion, I have choosen not to do that and allow for the call to revert because it allows for more precise calculations (specially without precision scaling) we will call those functions from off-chain anyway.
+- It is worth noting that if a tokens balance is far below others for any reason we will have a problem with redeeming, e.g. there are 16 equal backers in a pool, and the pool holds 3 tokens, only the last ones to leave the pool will get any of those. This is a simple arithmetic problem, not a problem with our contract.
+- Lastly, should we have a limit on the number of assets held by the pool? Not only this would allow me to scrape bits off of loop counters, but it would impede a situation where the contract's portfolio is "spread too thin" over hundreds or thousands of tokens, therefore making any deposit or redeem operation extremely gas expensive.
+
+Would appreciate input in any and all of those matters.
+
+What I was attempting to convey is that the 1:1 peg between shares and underlying assets won't hold no matter what we do, because multi-token with different balances, the strategies will change, the deposits won't be perfectly in ratio, and we can't just mint and burn tokens for people at will to keep control of what percentage everyone has (and people wouldn't like having their share amount shifting).
+
+Which means that, at some point, if we allow for every deposit value and every small token balance, with some amount of tokens deposited or shares redeemed, the numerator will be smaller than the denominator in the formulas used for minting and redeeming y' = (x' * y)/x, and the user will either get 0 shares, or 0 tokens.
+
+So I came to ask if anyone had a suggestion of a solid initial issuance value, which can help mitigate the problem (I'm thinking either constant 1e18 or 1e22, or sum of all tokens in initial deposit).
+
+Yea, the problem is the formula won't stretch forever, no matter how big the numbers. We can allow for wildly different amounts in deposits and balances by making the initial share number really big, but the more we do that, the less users can enter the vault, because each share issuance is a huge amount, and even uint256 has a limit.
+
+So ideally, alongside the well thoughtout initial issuance value, we would have a minimal (or even better, a constant) deposit, and a minimal balance for tokens traded.
+
+Ok, using a single token strategy, for simplicity:
+
+1st user
+deposits 10k tokenA
+let's say initial shares is the exact amount of deposited tokens.
+shares = 10k
+
+Strategy Changes
+0 tokenA, 10 billion tokenB
+
+2nd user
+deposits 100k tokenB
+shares = tokens * totalShares / totalTokens = 100k * 10k / 10 billion = 0.1 = 0
+
+ERC20 has no data structure that controls how many users own the tokens, and that's for a reason, it's suppose to allow for millions or billions of people to own tokens
+
+Look, I'm not sitting on my hands, the contract as I see it is 95% done, I'm in the process of testing it, I just wanted feedback on the tradeoff that will be made on initial issuance
+
+
+
+
+
+Updated the docs for StrategyPool and added docs for Escrow and StrategyPoolFactory
+
+https://github.com/mcsquaredfi/app.mc2.fi-solidity/tree/main/docs
+
+Note that, in this implementation:
+- There is no multiplication done on the 'shares' value of a deposit call (e.g. shares * 1e18), any calculation of the sort must be done by the backend
+- The change strategy (trade Pool's tokens) flow is done in 2 steps (unavoidable), and while it is under course the 'redeem' function is locked to protect users from redeeming less assets than they are entitled to
+- There can be only one change of strategy at a time
